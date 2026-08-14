@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
-import Navbar from "../components/layout/navbar";
 import { Providers } from "@/components/provider/providers";
 import { Toaster } from "@/components/ui/sonner";
+import LayoutShell from "./LayoutShell";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -22,15 +22,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html 
-      lang="en" 
+    <html
+      lang="en"
       className={`${poppins.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-(family-name:--font-poppins)">
         <Providers>
-          <Navbar />
-          {children}
+          <LayoutShell>{children}</LayoutShell>
           <Toaster position="top-right" richColors />
         </Providers>
       </body>

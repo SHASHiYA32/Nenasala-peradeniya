@@ -3,24 +3,41 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Menu, X } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import { useNav } from '../context/NavContext';
 
 export default function Navbar() {
+  const { isMobileOpen, toggleMobile } = useNav();
   const [signed, setSigned] = useState(true);
   const pathname = usePathname();
-  
+
   const isRoot = pathname === '/';
 
   return (
-    <div className="fixed w-full h-16 bg-white dark:bg-black border-b-2 border-amber-700/20 backdrop-blur-2xl px-12 md:px-56 z-50">
+    <div className="fixed w-full h-16 bg-white dark:bg-black border-b-2 border-amber-700/20 backdrop-blur-2xl px-4 md:px-12 z-50">
       <div className="w-full h-full flex flex-row items-center justify-between">
-        <a href='/'>
-          <span className="text-black dark:text-white font-semibold">Nenasala</span>{" "}
-          <span className="text-amber-600 font-semibold">Peradeniya</span>
-        </a>
+        
+        {/* Mobile Toggle & Logo */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleMobile}
+            className="p-2 text-slate-600 dark:text-slate-300 md:hidden focus:outline-none"
+            aria-label="Toggle Menu"
+          >
+            {isMobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+
+          <a href="/">
+            <span className="text-black dark:text-white font-semibold">Nenasala</span>{" "}
+            <span className="text-amber-600 font-semibold">Peradeniya</span>
+          </a>
+        </div>
+
+        {/* Right Section */}
         <div className="flex flex-row items-center gap-4">
           <ThemeToggle />
-          
+
           {isRoot && signed && (
             <Link href="/admin" className="h-9 px-4 flex items-center justify-center button-color bg-amber-600 text-white rounded-full hover:scale-105 transition-all cursor-pointer text-sm font-medium">
               Dashboard
