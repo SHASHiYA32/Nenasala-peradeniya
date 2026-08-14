@@ -116,7 +116,7 @@ const menuItems: MenuItem[] = [
   },
 ];
 
-export default function Sidebar() {
+export default function SidebarAdmin() {
   const pathname = usePathname();
 
   // Track open state for each dropdown menu by its name
