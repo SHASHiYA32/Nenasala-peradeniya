@@ -5,7 +5,7 @@ import { ShieldCheck, BookOpen, Users, BarChart3, ArrowRight, Lock, KeyRound } f
 
 export default function AdminLandingPage() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-slate-100 flex flex-col justify-between selection:bg-amber-500 selection:text-white transition-colors duration-300">
+    <div className="min-h-screen pt-10 bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-slate-100 flex flex-col justify-between selection:bg-amber-500 selection:text-white transition-colors duration-300">
       {/* Background glow effects */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-amber-500/10 dark:bg-amber-500/5 blur-[120px] rounded-full pointer-events-none" />
 

@@ -117,7 +117,6 @@ const menuItems: MenuItem[] = [
   },
 ];
 
-// 2. Accept props in the component signature
 export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
 
