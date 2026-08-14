@@ -38,7 +38,10 @@ export default function Admin() {
           </div>
         </button>
 
-        <button className="relative border border-amber-600/30 hover:border-amber-600 backdrop-blur-2xl rounded-3xl px-8 py-6 h-52 overflow-hidden cursor-pointer">
+        <button 
+        className="relative border border-amber-600/30 hover:border-amber-600 backdrop-blur-2xl rounded-3xl px-8 py-6 h-52 overflow-hidden cursor-pointer"
+        onClick={() => router.push("/admin-LMS/students")}
+        >
           <div className="absolute rounded-full bg-amber-600/25 h-52 w-52 -top-16 -right-16 blur-2xl" />
           <GraduationCap className="absolute h-42 w-42 -bottom-7 -right-7 rotate-12 -z-10 opacity-10" />
           <div className="w-full h-full flex flex-row items-start gap-5">
