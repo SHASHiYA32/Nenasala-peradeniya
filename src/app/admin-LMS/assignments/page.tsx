@@ -24,7 +24,7 @@ import {
   Pause,
   Play,
   Eye,
-  User
+  User,
 } from "lucide-react";
 
 // Types
@@ -43,7 +43,14 @@ interface Task {
   dueDate: string;
   submissions: number;
   totalAssigned: number;
-  status: "live" | "draft" | "cancelled" | "completed" | "expired" | "paused" | "deleted";
+  status:
+    | "live"
+    | "draft"
+    | "cancelled"
+    | "completed"
+    | "expired"
+    | "paused"
+    | "deleted";
   students: StudentSubmission[];
 }
 
@@ -58,10 +65,20 @@ interface QuizQuestion {
   options: QuizOption[];
 }
 
-// Initial Mock Data (Extended with Students)
+// Initial Mock Data
 const MOCK_STUDENTS: StudentSubmission[] = [
-  { id: "STU-01", name: "Sahan Jayasinghe", status: "submitted", submittedAt: "2026-08-14T10:30:00" },
-  { id: "STU-02", name: "Kavindi Perera", status: "submitted", submittedAt: "2026-08-14T14:45:00" },
+  {
+    id: "STU-01",
+    name: "Sahan Jayasinghe",
+    status: "submitted",
+    submittedAt: "2026-08-14T10:30:00",
+  },
+  {
+    id: "STU-02",
+    name: "Kavindi Perera",
+    status: "submitted",
+    submittedAt: "2026-08-14T14:45:00",
+  },
   { id: "STU-03", name: "Tariq Ahamad", status: "pending" },
   { id: "STU-04", name: "Nipuni Silva", status: "pending" },
 ];
@@ -87,7 +104,11 @@ const INITIAL_TASKS: Task[] = [
     submissions: 0,
     totalAssigned: 4,
     status: "draft",
-    students: MOCK_STUDENTS.map(s => ({ ...s, status: "pending", submittedAt: undefined })),
+    students: MOCK_STUDENTS.map((s) => ({
+      ...s,
+      status: "pending",
+      submittedAt: undefined,
+    })),
   },
   {
     id: "TSK-003",
@@ -98,7 +119,11 @@ const INITIAL_TASKS: Task[] = [
     submissions: 4,
     totalAssigned: 4,
     status: "completed",
-    students: MOCK_STUDENTS.map(s => ({ ...s, status: "submitted", submittedAt: "2026-07-14T09:00:00" })),
+    students: MOCK_STUDENTS.map((s) => ({
+      ...s,
+      status: "submitted",
+      submittedAt: "2026-07-14T09:00:00",
+    })),
   },
   {
     id: "TSK-004",
@@ -110,19 +135,21 @@ const INITIAL_TASKS: Task[] = [
     totalAssigned: 4,
     status: "paused",
     students: MOCK_STUDENTS,
-  }
+  },
 ];
 
 export default function AssignmentsAndQuizzes() {
   // Navigation & Tabs
-  const [activeType, setActiveType] = useState<"assignment" | "quiz">("assignment");
+  const [activeType, setActiveType] = useState<"assignment" | "quiz">(
+    "assignment",
+  );
   const [listTab, setListTab] = useState<"active" | "history">("active");
-  
+
   // Filters & State
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
-  
+
   // Modals & Popups
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -145,19 +172,25 @@ export default function AssignmentsAndQuizzes() {
       id: "q-1",
       text: "",
       options: [
-        { id: "o-1", text: "" }, { id: "o-2", text: "" }, { id: "o-3", text: "" }, { id: "o-4", text: "" },
+        { id: "o-1", text: "" },
+        { id: "o-2", text: "" },
+        { id: "o-3", text: "" },
+        { id: "o-4", text: "" },
       ],
     },
   ]);
 
-  // Document Upload State (Mock)
+  // Document Upload State
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   // Click outside listener to close dropdowns
   const dropdownRef = useRef<HTMLTableDataCellElement>(null);
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setActiveDropdown(null);
       }
     }
@@ -170,8 +203,12 @@ export default function AssignmentsAndQuizzes() {
     return tasks.filter((task) => {
       if (task.type !== activeType) return false;
 
-      // Active vs History categorization
-      const isHistorical = ["expired", "cancelled", "completed", "deleted"].includes(task.status);
+      const isHistorical = [
+        "expired",
+        "cancelled",
+        "completed",
+        "deleted",
+      ].includes(task.status);
       if (listTab === "active" && isHistorical) return false;
       if (listTab === "history" && !isHistorical) return false;
 
@@ -180,7 +217,8 @@ export default function AssignmentsAndQuizzes() {
         task.course.toLowerCase().includes(searchQuery.toLowerCase());
       if (!matchesSearch) return false;
 
-      if (statusFilter !== "All" && task.status !== statusFilter.toLowerCase()) return false;
+      if (statusFilter !== "All" && task.status !== statusFilter.toLowerCase())
+        return false;
 
       return true;
     });
@@ -196,7 +234,8 @@ export default function AssignmentsAndQuizzes() {
       case "live":
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold tracking-wide uppercase">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>{" "}
+            Live
           </span>
         );
       case "draft":
@@ -238,8 +277,13 @@ export default function AssignmentsAndQuizzes() {
     }
   };
 
-  const handleUpdateTaskStatus = (taskId: string, newStatus: Task["status"]) => {
-    setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+  const handleUpdateTaskStatus = (
+    taskId: string,
+    newStatus: Task["status"],
+  ) => {
+    setTasks(
+      tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
+    );
     setActiveDropdown(null);
   };
 
@@ -261,24 +305,76 @@ export default function AssignmentsAndQuizzes() {
 
     setTasks([newTask, ...tasks]);
     setIsModalOpen(false);
-    setFormData({ title: "", course: "", intake: "", startDate: "", dueDate: "", closeDate: "", status: "draft" });
+    setFormData({
+      title: "",
+      course: "",
+      intake: "",
+      startDate: "",
+      dueDate: "",
+      closeDate: "",
+      status: "draft",
+    });
     setUploadedFile(null);
   };
 
-  // ----- Quiz Builder Functions Omitted for Brevity (unchanged) -----
+  // Quiz Builder Functions
   const addQuizQuestion = () => {
-    setQuizQuestions([...quizQuestions, { id: `q-${Date.now()}`, text: "", options: [{ id: `o-${Date.now()}-1`, text: "" }, { id: `o-${Date.now()}-2`, text: "" }, { id: `o-${Date.now()}-3`, text: "" }, { id: `o-${Date.now()}-4`, text: "" }] }]);
+    setQuizQuestions([
+      ...quizQuestions,
+      {
+        id: `q-${Date.now()}`,
+        text: "",
+        options: [
+          { id: `o-${Date.now()}-1`, text: "" },
+          { id: `o-${Date.now()}-2`, text: "" },
+          { id: `o-${Date.now()}-3`, text: "" },
+          { id: `o-${Date.now()}-4`, text: "" },
+        ],
+      },
+    ]);
   };
-  const removeQuizQuestion = (qId: string) => setQuizQuestions(quizQuestions.filter((q) => q.id !== qId));
-  const updateQuestionText = (qId: string, text: string) => setQuizQuestions(quizQuestions.map((q) => (q.id === qId ? { ...q, text } : q)));
-  const addOption = (qId: string) => setQuizQuestions(quizQuestions.map((q) => q.id === qId ? { ...q, options: [...q.options, { id: `o-${Date.now()}`, text: "" }] } : q));
-  const removeOption = (qId: string, oId: string) => setQuizQuestions(quizQuestions.map((q) => q.id === qId ? { ...q, options: q.options.filter((o) => o.id !== oId) } : q));
-  const updateOptionText = (qId: string, oId: string, text: string) => setQuizQuestions(quizQuestions.map((q) => q.id === qId ? { ...q, options: q.options.map((o) => (o.id === oId ? { ...o, text } : o)) } : q));
+  const removeQuizQuestion = (qId: string) =>
+    setQuizQuestions(quizQuestions.filter((q) => q.id !== qId));
+  const updateQuestionText = (qId: string, text: string) =>
+    setQuizQuestions(
+      quizQuestions.map((q) => (q.id === qId ? { ...q, text } : q)),
+    );
+  const addOption = (qId: string) =>
+    setQuizQuestions(
+      quizQuestions.map((q) =>
+        q.id === qId
+          ? {
+              ...q,
+              options: [...q.options, { id: `o-${Date.now()}`, text: "" }],
+            }
+          : q,
+      ),
+    );
+  const removeOption = (qId: string, oId: string) =>
+    setQuizQuestions(
+      quizQuestions.map((q) =>
+        q.id === qId
+          ? { ...q, options: q.options.filter((o) => o.id !== oId) }
+          : q,
+      ),
+    );
+  const updateOptionText = (qId: string, oId: string, text: string) =>
+    setQuizQuestions(
+      quizQuestions.map((q) =>
+        q.id === qId
+          ? {
+              ...q,
+              options: q.options.map((o) =>
+                o.id === oId ? { ...o, text } : o,
+              ),
+            }
+          : q,
+      ),
+    );
 
   return (
     <div className="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen transition-colors duration-300 font-sans p-6 md:p-10 relative">
       <div className="max-w-7xl mx-auto space-y-8">
-        
         {/* ================= TOP HEADER ================= */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-6">
           <div className="flex items-center gap-3">
@@ -286,21 +382,33 @@ export default function AssignmentsAndQuizzes() {
               <FileText className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Assignments & Quizzes</h1>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Create, distribute, and track student assessments</p>
+              <h1 className="text-2xl font-bold tracking-tight">
+                Assignments & Quizzes
+              </h1>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Create, distribute, and track student assessments
+              </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="p-1 rounded-xl bg-zinc-200/80 dark:bg-zinc-900 border border-zinc-300/60 dark:border-zinc-800 flex items-center shadow-inner">
               <button
-                onClick={() => { setActiveType("assignment"); setSearchQuery(""); setStatusFilter("All"); }}
+                onClick={() => {
+                  setActiveType("assignment");
+                  setSearchQuery("");
+                  setStatusFilter("All");
+                }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeType === "assignment" ? "bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20" : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"}`}
               >
                 <FileText className="w-4 h-4" /> Assignments
               </button>
               <button
-                onClick={() => { setActiveType("quiz"); setSearchQuery(""); setStatusFilter("All"); }}
+                onClick={() => {
+                  setActiveType("quiz");
+                  setSearchQuery("");
+                  setStatusFilter("All");
+                }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeType === "quiz" ? "bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20" : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"}`}
               >
                 <HelpCircle className="w-4 h-4" /> Quizzes
@@ -312,12 +420,13 @@ export default function AssignmentsAndQuizzes() {
               className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 active:scale-[0.98] transition-all duration-200"
             >
               <Plus className="w-5 h-5 stroke-[2.5]" />
-              <span>New {activeType === "assignment" ? "Assignment" : "Quiz"}</span>
+              <span>
+                New {activeType === "assignment" ? "Assignment" : "Quiz"}
+              </span>
             </button>
           </div>
         </div>
 
-        {/* ================= SEARCH & QUICK FILTERS ================= */}
         <div className="flex flex-col lg:flex-row items-center justify-between gap-4 bg-white dark:bg-zinc-900/70 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800/80 shadow-sm">
           <div className="relative w-full lg:w-96">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
@@ -329,11 +438,13 @@ export default function AssignmentsAndQuizzes() {
               className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
             />
           </div>
-          
+
           <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0 hide-scrollbar">
             <div className="flex items-center gap-1.5 px-3 border-r border-zinc-200 dark:border-zinc-800">
               <Filter className="w-4 h-4 text-zinc-400" />
-              <span className="text-xs font-semibold text-zinc-500">Filter:</span>
+              <span className="text-xs font-semibold text-zinc-500">
+                Filter:
+              </span>
             </div>
             <div className="flex items-center gap-2">
               {availableFilters.map((filter) => (
@@ -351,18 +462,27 @@ export default function AssignmentsAndQuizzes() {
 
         {/* ================= LIST SECTION ================= */}
         <div className="bg-white dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
-          
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
-            <h2 className="text-lg font-bold capitalize">{listTab === "active" ? `Active ${activeType}s` : `${activeType} History`}</h2>
+            <h2 className="text-lg font-bold capitalize">
+              {listTab === "active"
+                ? `Active ${activeType}s`
+                : `${activeType} History`}
+            </h2>
             <div className="flex items-center bg-zinc-200/80 dark:bg-zinc-950 p-1 rounded-lg border border-zinc-300/60 dark:border-zinc-800">
               <button
-                onClick={() => { setListTab("active"); setStatusFilter("All"); }}
+                onClick={() => {
+                  setListTab("active");
+                  setStatusFilter("All");
+                }}
                 className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${listTab === "active" ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"}`}
               >
                 Current Tasks
               </button>
               <button
-                onClick={() => { setListTab("history"); setStatusFilter("All"); }}
+                onClick={() => {
+                  setListTab("history");
+                  setStatusFilter("All");
+                }}
                 className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${listTab === "history" ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"}`}
               >
                 <History className="w-3.5 h-3.5" /> History
@@ -370,126 +490,214 @@ export default function AssignmentsAndQuizzes() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Table Container - added padding-bottom and removed strict overflow-y clipping */}
+          <div className="overflow-x-auto min-h-[350px] pb-16">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800">
-                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider whitespace-nowrap">Task Name</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider whitespace-nowrap">Target Course</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider whitespace-nowrap">Due Date</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider whitespace-nowrap">Submissions</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider whitespace-nowrap">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider whitespace-nowrap text-right">Actions</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider whitespace-nowrap">
+                    Task Name
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider whitespace-nowrap">
+                    Target Course
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider whitespace-nowrap">
+                    Due Date
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider whitespace-nowrap">
+                    Submissions
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider whitespace-nowrap">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider whitespace-nowrap text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800/80">
                 {filteredTasks.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-zinc-500 dark:text-zinc-400">
+                    <td
+                      colSpan={6}
+                      className="px-6 py-12 text-center text-zinc-500 dark:text-zinc-400"
+                    >
                       <div className="flex flex-col items-center justify-center">
                         <Filter className="w-8 h-8 mb-3 opacity-20" />
-                        <p className="text-sm font-medium">No {activeType}s found.</p>
+                        <p className="text-sm font-medium">
+                          No {activeType}s found.
+                        </p>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  filteredTasks.map((task) => (
-                    <tr 
-                      key={task.id} 
-                      onClick={() => task.status !== "deleted" ? setSelectedTask(task) : null}
-                      className={`transition-colors group ${task.status !== "deleted" ? "hover:bg-zinc-50 dark:hover:bg-zinc-800/40 cursor-pointer" : "opacity-60 bg-zinc-50/50 dark:bg-zinc-950/50"}`}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-start gap-3">
-                          <div className={`mt-0.5 p-2 rounded-lg border ${task.type === 'assignment' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' : 'bg-purple-500/10 text-purple-600 border-purple-500/20'}`}>
-                            {task.type === 'assignment' ? <FileText className="w-4 h-4" /> : <HelpCircle className="w-4 h-4" />}
-                          </div>
-                          <div>
-                            <div className={`text-sm font-bold transition-colors ${task.status !== 'deleted' ? 'text-zinc-900 dark:text-zinc-100 group-hover:text-amber-500' : 'text-zinc-500 line-through decoration-zinc-400'}`}>
-                              {task.title}
+                  filteredTasks.map((task, index) => {
+                    // Logic to automatically open menu upwards if it's near the bottom
+                    const isNearBottom =
+                      index >= filteredTasks.length - 2 &&
+                      filteredTasks.length > 2;
+
+                    return (
+                      <tr
+                        key={task.id}
+                        onClick={() =>
+                          task.status !== "deleted"
+                            ? setSelectedTask(task)
+                            : null
+                        }
+                        className={`transition-colors group ${task.status !== "deleted" ? "hover:bg-zinc-50 dark:hover:bg-zinc-800/40 cursor-pointer" : "opacity-60 bg-zinc-50/50 dark:bg-zinc-950/50"}`}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`mt-0.5 p-2 rounded-lg border ${task.type === "assignment" ? "bg-blue-500/10 text-blue-600 border-blue-500/20" : "bg-purple-500/10 text-purple-600 border-purple-500/20"}`}
+                            >
+                              {task.type === "assignment" ? (
+                                <FileText className="w-4 h-4" />
+                              ) : (
+                                <HelpCircle className="w-4 h-4" />
+                              )}
                             </div>
-                            <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400">{task.id}</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{task.course}</span>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5 text-xs text-zinc-700 dark:text-zinc-300">
-                          <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-                          <span>{new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        {["draft", "cancelled", "deleted"].includes(task.status) ? (
-                          <span className="text-zinc-400 dark:text-zinc-500 italic text-[11px]">N/A</span>
-                        ) : (
-                          <div className="w-32 space-y-1.5">
-                            <div className="flex items-center justify-between text-[11px] font-medium">
-                              <span className="text-zinc-900 dark:text-zinc-100">{task.submissions}</span>
-                              <span className="text-zinc-500">/ {task.totalAssigned}</span>
-                            </div>
-                            <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                            <div>
                               <div
-                                className={`h-full transition-all duration-500 ${task.submissions === task.totalAssigned && task.totalAssigned > 0 ? "bg-emerald-500" : "bg-amber-500"}`}
-                                style={{ width: `${task.totalAssigned > 0 ? (task.submissions / task.totalAssigned) * 100 : 0}%` }}
-                              />
+                                className={`text-sm font-bold transition-colors ${task.status !== "deleted" ? "text-zinc-900 dark:text-zinc-100 group-hover:text-amber-500" : "text-zinc-500 line-through decoration-zinc-400"}`}
+                              >
+                                {task.title}
+                              </div>
+                              <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400">
+                                {task.id}
+                              </span>
                             </div>
                           </div>
-                        )}
-                      </td>
+                        </td>
 
-                      <td className="px-6 py-4">
-                        {getStatusBadge(task.status)}
-                      </td>
+                        <td className="px-6 py-4">
+                          <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                            {task.course}
+                          </span>
+                        </td>
 
-                      <td className="px-6 py-4 text-right relative" ref={activeDropdown === task.id ? dropdownRef : null}>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === task.id ? null : task.id); }}
-                          className="p-2 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all focus:outline-none"
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-                        
-                        {/* More Actions Dropdown */}
-                        {activeDropdown === task.id && (
-                          <div className="absolute right-6 top-10 mt-1 w-40 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-10 py-1 overflow-hidden animate-in fade-in zoom-in-95">
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(task.id, "paused"); }}
-                              disabled={task.status !== "live"}
-                              className="w-full text-left px-4 py-2 text-xs font-semibold flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              <Pause className="w-3.5 h-3.5" /> Pause
-                            </button>
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(task.id, "live"); }}
-                              disabled={task.status === "live" || task.status === "deleted" || task.status === "cancelled"}
-                              className="w-full text-left px-4 py-2 text-xs font-semibold flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              <Play className="w-3.5 h-3.5" /> Resume
-                            </button>
-                            <div className="h-px w-full bg-zinc-100 dark:bg-zinc-800 my-1"></div>
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(task.id, "cancelled"); }}
-                              className="w-full text-left px-4 py-2 text-xs font-semibold flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                            >
-                              <XCircle className="w-3.5 h-3.5" /> Cancel
-                            </button>
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(task.id, "deleted"); }}
-                              className="w-full text-left px-4 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" /> Delete
-                            </button>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+                            <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                            <span>
+                              {new Date(task.dueDate).toLocaleDateString(
+                                undefined,
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                },
+                              )}
+                            </span>
                           </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+
+                        <td className="px-6 py-4">
+                          {["draft", "cancelled", "deleted"].includes(
+                            task.status,
+                          ) ? (
+                            <span className="text-zinc-400 dark:text-zinc-500 italic text-[11px]">
+                              N/A
+                            </span>
+                          ) : (
+                            <div className="w-32 space-y-1.5">
+                              <div className="flex items-center justify-between text-[11px] font-medium">
+                                <span className="text-zinc-900 dark:text-zinc-100">
+                                  {task.submissions}
+                                </span>
+                                <span className="text-zinc-500">
+                                  / {task.totalAssigned}
+                                </span>
+                              </div>
+                              <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className={`h-full transition-all duration-500 ${task.submissions === task.totalAssigned && task.totalAssigned > 0 ? "bg-emerald-500" : "bg-amber-500"}`}
+                                  style={{
+                                    width: `${task.totalAssigned > 0 ? (task.submissions / task.totalAssigned) * 100 : 0}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="px-6 py-4">
+                          {getStatusBadge(task.status)}
+                        </td>
+
+                        <td
+                          className="px-6 py-4 text-right relative"
+                          ref={activeDropdown === task.id ? dropdownRef : null}
+                        >
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDropdown(
+                                activeDropdown === task.id ? null : task.id,
+                              );
+                            }}
+                            className="p-2 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all focus:outline-none"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+
+                          {/* Dynamic Dropdown Fix */}
+                          {activeDropdown === task.id && (
+                            <div
+                              className={`absolute right-6 w-40 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl z-50 py-1 overflow-hidden animate-in fade-in zoom-in-95 ${
+                                isNearBottom ? "bottom-12" : "top-12"
+                              }`}
+                            >
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateTaskStatus(task.id, "paused");
+                                }}
+                                disabled={task.status !== "live"}
+                                className="w-full text-left px-4 py-2 text-xs font-semibold flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-zinc-800 dark:text-zinc-200"
+                              >
+                                <Pause className="w-3.5 h-3.5" /> Pause
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateTaskStatus(task.id, "live");
+                                }}
+                                disabled={
+                                  task.status === "live" ||
+                                  task.status === "deleted" ||
+                                  task.status === "cancelled"
+                                }
+                                className="w-full text-left px-4 py-2 text-xs font-semibold flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-zinc-800 dark:text-zinc-200"
+                              >
+                                <Play className="w-3.5 h-3.5" /> Resume
+                              </button>
+                              <div className="h-px w-full bg-zinc-100 dark:bg-zinc-800 my-1"></div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateTaskStatus(task.id, "cancelled");
+                                }}
+                                className="w-full text-left px-4 py-2 text-xs font-semibold flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-zinc-800 dark:text-zinc-200"
+                              >
+                                <XCircle className="w-3.5 h-3.5" /> Cancel
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateTaskStatus(task.id, "deleted");
+                                }}
+                                className="w-full text-left px-4 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -505,7 +713,11 @@ export default function AssignmentsAndQuizzes() {
               {/* Sheet Header */}
               <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between sticky top-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur z-10">
                 <span className="text-xs font-mono font-bold text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
-                  {selectedTask.type === "assignment" ? <FileText className="w-3.5 h-3.5" /> : <HelpCircle className="w-3.5 h-3.5" />}
+                  {selectedTask.type === "assignment" ? (
+                    <FileText className="w-3.5 h-3.5" />
+                  ) : (
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  )}
                   {selectedTask.type} Details
                 </span>
                 <button
@@ -552,36 +764,62 @@ export default function AssignmentsAndQuizzes() {
                 {/* Students Section */}
                 <div className="space-y-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Student Submissions</h3>
+                    <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                      Student Submissions
+                    </h3>
                     <div className="text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-md">
-                      {selectedTask.submissions} / {selectedTask.totalAssigned} Submitted
+                      {selectedTask.submissions} / {selectedTask.totalAssigned}{" "}
+                      Submitted
                     </div>
                   </div>
 
                   <div className="space-y-6">
                     {/* Submitted List */}
                     <div className="space-y-2">
-                      <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Submitted</h4>
-                      {selectedTask.students?.filter(s => s.status === "submitted").map(student => (
-                        <div key={student.id} className="flex items-center justify-between p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-                              <CheckCircle2 className="w-4 h-4" />
+                      <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">
+                        Submitted
+                      </h4>
+                      {selectedTask.students
+                        ?.filter((s) => s.status === "submitted")
+                        .map((student) => (
+                          <div
+                            key={student.id}
+                            className="flex items-center justify-between p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                                <CheckCircle2 className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                                  {student.name}
+                                </p>
+                                <p className="text-[10px] text-zinc-500 mt-0.5">
+                                  Submitted:{" "}
+                                  {student.submittedAt
+                                    ? new Date(
+                                        student.submittedAt,
+                                      ).toLocaleDateString()
+                                    : "N/A"}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{student.name}</p>
-                              <p className="text-[10px] text-zinc-500 mt-0.5">
-                                Submitted: {student.submittedAt ? new Date(student.submittedAt).toLocaleDateString() : 'N/A'}
-                              </p>
-                            </div>
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-semibold transition-colors">
+                              {selectedTask.type === "assignment" ? (
+                                <Eye className="w-3.5 h-3.5" />
+                              ) : (
+                                <HelpCircle className="w-3.5 h-3.5" />
+                              )}
+                              View{" "}
+                              {selectedTask.type === "assignment"
+                                ? "Doc"
+                                : "Answers"}
+                            </button>
                           </div>
-                          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-semibold transition-colors">
-                            {selectedTask.type === "assignment" ? <Eye className="w-3.5 h-3.5" /> : <HelpCircle className="w-3.5 h-3.5" />}
-                            View {selectedTask.type === "assignment" ? "Doc" : "Answers"}
-                          </button>
-                        </div>
-                      ))}
-                      {selectedTask.students?.filter(s => s.status === "submitted").length === 0 && (
+                        ))}
+                      {selectedTask.students?.filter(
+                        (s) => s.status === "submitted",
+                      ).length === 0 && (
                         <div className="text-xs text-zinc-500 italic p-3 text-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
                           No submissions yet.
                         </div>
@@ -590,22 +828,37 @@ export default function AssignmentsAndQuizzes() {
 
                     {/* Pending List */}
                     <div className="space-y-2">
-                      <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Pending</h4>
-                      {selectedTask.students?.filter(s => s.status === "pending").map(student => (
-                        <div key={student.id} className="flex items-center justify-between p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
-                              <User className="w-4 h-4" />
+                      <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">
+                        Pending
+                      </h4>
+                      {selectedTask.students
+                        ?.filter((s) => s.status === "pending")
+                        .map((student) => (
+                          <div
+                            key={student.id}
+                            className="flex items-center justify-between p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
+                                <User className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                                  {student.name}
+                                </p>
+                                <p className="text-[10px] text-zinc-500 mt-0.5">
+                                  Awaiting Submission
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{student.name}</p>
-                              <p className="text-[10px] text-zinc-500 mt-0.5">Awaiting Submission</p>
-                            </div>
+                            <span className="text-[10px] font-semibold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md">
+                              Pending
+                            </span>
                           </div>
-                          <span className="text-[10px] font-semibold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md">Pending</span>
-                        </div>
-                      ))}
-                      {selectedTask.students?.filter(s => s.status === "pending").length === 0 && (
+                        ))}
+                      {selectedTask.students?.filter(
+                        (s) => s.status === "pending",
+                      ).length === 0 && (
                         <div className="text-xs text-zinc-500 italic p-3 text-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
                           All assigned students have submitted.
                         </div>
@@ -632,7 +885,6 @@ export default function AssignmentsAndQuizzes() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh]">
-            
             <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-amber-500" />
@@ -648,8 +900,10 @@ export default function AssignmentsAndQuizzes() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveTask} className="flex-1 overflow-y-auto p-6 space-y-6 text-sm custom-scrollbar">
-              
+            <form
+              onSubmit={handleSaveTask}
+              className="flex-1 overflow-y-auto p-6 space-y-6 text-sm custom-scrollbar"
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5 capitalize">
@@ -660,7 +914,9 @@ export default function AssignmentsAndQuizzes() {
                     required
                     placeholder={`e.g. Mid-term ${activeType}`}
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
                     className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-sm"
                   />
                 </div>
@@ -673,7 +929,9 @@ export default function AssignmentsAndQuizzes() {
                     required
                     placeholder="e.g. CS-401 Advanced Deep Learning"
                     value={formData.course}
-                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, course: e.target.value })
+                    }
                     className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-sm"
                   />
                 </div>
@@ -689,7 +947,9 @@ export default function AssignmentsAndQuizzes() {
                     required
                     placeholder="e.g. Fall 2026"
                     value={formData.intake}
-                    onChange={(e) => setFormData({ ...formData, intake: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, intake: e.target.value })
+                    }
                     className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-sm"
                   />
                 </div>
@@ -701,7 +961,9 @@ export default function AssignmentsAndQuizzes() {
                     type="datetime-local"
                     required
                     value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, startDate: e.target.value })
+                    }
                     className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-xs [color-scheme:light] dark:[color-scheme:dark]"
                   />
                 </div>
@@ -713,7 +975,9 @@ export default function AssignmentsAndQuizzes() {
                     type="datetime-local"
                     required
                     value={formData.dueDate}
-                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, dueDate: e.target.value })
+                    }
                     className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-xs [color-scheme:light] dark:[color-scheme:dark]"
                   />
                 </div>
@@ -725,7 +989,9 @@ export default function AssignmentsAndQuizzes() {
                     type="datetime-local"
                     required
                     value={formData.closeDate}
-                    onChange={(e) => setFormData({ ...formData, closeDate: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, closeDate: e.target.value })
+                    }
                     className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-xs [color-scheme:light] dark:[color-scheme:dark]"
                   />
                 </div>
@@ -737,9 +1003,9 @@ export default function AssignmentsAndQuizzes() {
                     Upload Assignment Document
                   </label>
                   <div className="border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-8 flex flex-col items-center justify-center text-center bg-zinc-50 dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition-colors relative">
-                    <input 
-                      type="file" 
-                      accept=".pdf,.docx" 
+                    <input
+                      type="file"
+                      accept=".pdf,.docx"
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       onChange={(e) => {
                         if (e.target.files && e.target.files.length > 0) {
@@ -747,13 +1013,17 @@ export default function AssignmentsAndQuizzes() {
                         }
                       }}
                     />
-                    
+
                     {uploadedFile ? (
                       <div className="flex flex-col items-center gap-2">
                         <File className="w-10 h-10 text-amber-500" />
                         <div>
-                          <p className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">{uploadedFile.name}</p>
-                          <p className="text-xs text-zinc-500 mt-1">{(uploadedFile.size / 1024).toFixed(1)} KB</p>
+                          <p className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">
+                            {uploadedFile.name}
+                          </p>
+                          <p className="text-xs text-zinc-500 mt-1">
+                            {(uploadedFile.size / 1024).toFixed(1)} KB
+                          </p>
                         </div>
                       </div>
                     ) : (
@@ -774,16 +1044,22 @@ export default function AssignmentsAndQuizzes() {
               {activeType === "quiz" && (
                 <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Quiz Questions Builder</h3>
+                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                      Quiz Questions Builder
+                    </h3>
                     <span className="text-xs font-semibold text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-md">
-                      {quizQuestions.length} Question{quizQuestions.length !== 1 ? 's' : ''}
+                      {quizQuestions.length} Question
+                      {quizQuestions.length !== 1 ? "s" : ""}
                     </span>
                   </div>
 
                   {quizQuestions.map((q, qIndex) => (
-                    <div key={q.id} className="bg-zinc-50 dark:bg-zinc-900/50 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-4 relative group">
+                    <div
+                      key={q.id}
+                      className="bg-zinc-50 dark:bg-zinc-900/50 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-4 relative group"
+                    >
                       {quizQuestions.length > 1 && (
-                        <button 
+                        <button
                           type="button"
                           onClick={() => removeQuizQuestion(q.id)}
                           className="absolute top-4 right-4 p-1.5 text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md transition-colors"
@@ -792,7 +1068,7 @@ export default function AssignmentsAndQuizzes() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       )}
-                      
+
                       <div>
                         <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">
                           Question {qIndex + 1}
@@ -802,7 +1078,9 @@ export default function AssignmentsAndQuizzes() {
                           required
                           placeholder="Enter your question here..."
                           value={q.text}
-                          onChange={(e) => updateQuestionText(q.id, e.target.value)}
+                          onChange={(e) =>
+                            updateQuestionText(q.id, e.target.value)
+                          }
                           className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-sm font-medium pr-10"
                         />
                       </div>
@@ -818,11 +1096,13 @@ export default function AssignmentsAndQuizzes() {
                               required
                               placeholder={`Option ${oIndex + 1}`}
                               value={opt.text}
-                              onChange={(e) => updateOptionText(q.id, opt.id, e.target.value)}
+                              onChange={(e) =>
+                                updateOptionText(q.id, opt.id, e.target.value)
+                              }
                               className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-xs"
                             />
                             {q.options.length > 2 && (
-                              <button 
+                              <button
                                 type="button"
                                 onClick={() => removeOption(q.id, opt.id)}
                                 className="p-1.5 text-zinc-400 hover:text-rose-500 transition-colors"
@@ -833,7 +1113,7 @@ export default function AssignmentsAndQuizzes() {
                             )}
                           </div>
                         ))}
-                        
+
                         <button
                           type="button"
                           onClick={() => addOption(q.id)}
@@ -861,7 +1141,12 @@ export default function AssignmentsAndQuizzes() {
             <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-zinc-50 dark:bg-zinc-900/50 shrink-0">
               <select
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as Task["status"] })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    status: e.target.value as Task["status"],
+                  })
+                }
                 className="px-3.5 py-2.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all text-sm font-semibold"
               >
                 <option value="draft">Save as Draft</option>
@@ -885,7 +1170,6 @@ export default function AssignmentsAndQuizzes() {
                 </button>
               </div>
             </div>
-
           </div>
         </div>
       )}
