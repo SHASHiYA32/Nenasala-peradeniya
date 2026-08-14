@@ -146,8 +146,8 @@ export default function ClassAnnouncementsUI() {
   const togglePin = (id: number) => {
     setAnnouncements((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, isPinned: !item.isPinned } : item
-      )
+        item.id === id ? { ...item, isPinned: !item.isPinned } : item,
+      ),
     );
   };
 
@@ -164,16 +164,16 @@ export default function ClassAnnouncementsUI() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-slate-100 p-6 md:p-10">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-slate-100 p-4 sm:p-6 md:p-10">
+      <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
         {/* Header section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-zinc-800 pb-6">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
-              <Bell className="w-8 h-8 text-amber-500" />
-              Student Announcements
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight flex items-center gap-2.5 sm:gap-3">
+              <Bell className="w-7 h-7 sm:w-8 sm:h-8 text-amber-500 shrink-0" />
+              <span>Student Announcements</span>
             </h1>
-            <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">
+            <p className="text-slate-500 dark:text-zinc-400 text-xs sm:text-sm mt-1">
               Broadcast updates, exam alerts, and events directly to your class.
             </p>
           </div>
@@ -181,21 +181,24 @@ export default function ClassAnnouncementsUI() {
           {/* Add Announcement Dialog */}
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogTrigger>
-              <a className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 transition-all cursor-pointer active:scale-95">
+              <a className="w-full sm:w-auto flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 transition-all cursor-pointer active:scale-95">
                 <Plus className="w-5 h-5 stroke-[2.5]" />
                 New Announcement
               </a>
             </DialogTrigger>
 
-            <DialogContent className="sm:max-w-xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 p-6 rounded-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[95vw] sm:max-w-xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 p-4 sm:p-6 rounded-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                <DialogTitle className="text-lg sm:text-xl font-bold flex items-center gap-2">
                   <Megaphone className="w-5 h-5 text-amber-500" />
                   Create Announcement
                 </DialogTitle>
               </DialogHeader>
 
-              <form onSubmit={handleSubmit} className="space-y-5 mt-4">
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-4 sm:space-y-5 mt-4"
+              >
                 {/* Title & Custom Emoji Selector */}
                 <div>
                   <label className="block text-xs font-semibold uppercase text-slate-500 dark:text-zinc-400 mb-2">
@@ -206,7 +209,7 @@ export default function ClassAnnouncementsUI() {
                     <button
                       type="button"
                       onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
-                      className="p-3 bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-amber-500 transition-colors flex items-center justify-center text-amber-500"
+                      className="p-3 bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-amber-500 transition-colors flex items-center justify-center text-amber-500 shrink-0"
                       title="Select Custom Icon"
                     >
                       {renderIcon(formData.iconName, "w-5 h-5")}
@@ -220,13 +223,13 @@ export default function ClassAnnouncementsUI() {
                       onChange={(e) =>
                         setFormData({ ...formData, title: e.target.value })
                       }
-                      className="flex-1 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 text-sm outline-none focus:border-amber-500"
+                      className="w-full min-w-0 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-sm outline-none focus:border-amber-500"
                     />
                   </div>
 
                   {/* Icon Selector Grid Dialog / Popup */}
                   {isEmojiPickerOpen && (
-                    <div className="mt-3 p-3 bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl grid grid-cols-6 gap-2">
+                    <div className="mt-3 p-3 bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl grid grid-cols-3 sm:grid-cols-6 gap-2">
                       {AVAILABLE_ICONS.map((item) => {
                         const IconComponent = item.icon;
                         return (
@@ -244,7 +247,9 @@ export default function ClassAnnouncementsUI() {
                             }`}
                           >
                             <IconComponent className="w-5 h-5 mb-1" />
-                            <span className="text-[10px]">{item.label}</span>
+                            <span className="text-[10px] truncate max-w-full">
+                              {item.label}
+                            </span>
                           </button>
                         );
                       })}
@@ -314,8 +319,8 @@ export default function ClassAnnouncementsUI() {
                       </button>
                     </div>
                   ) : (
-                    <label className="border-2 border-dashed border-slate-200 dark:border-zinc-800 hover:border-amber-500/50 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-colors bg-slate-50/50 dark:bg-zinc-900/50">
-                      <ImageIcon className="w-8 h-8 text-slate-400 mb-2" />
+                    <label className="border-2 border-dashed border-slate-200 dark:border-zinc-800 hover:border-amber-500/50 rounded-xl p-4 sm:p-5 flex flex-col items-center justify-center cursor-pointer transition-colors bg-slate-50/50 dark:bg-zinc-900/50 text-center">
+                      <ImageIcon className="w-7 h-7 sm:w-8 sm:h-8 text-slate-400 mb-2" />
                       <span className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
                         Click to upload image banner
                       </span>
@@ -353,18 +358,18 @@ export default function ClassAnnouncementsUI() {
                 </div>
 
                 {/* Modal Footer Controls */}
-                <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-zinc-800">
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4 border-t border-slate-200 dark:border-zinc-800">
                   <Button
                     type="button"
                     variant="ghost"
                     onClick={() => setIsModalOpen(false)}
-                    className="rounded-xl text-sm"
+                    className="w-full sm:w-auto rounded-xl text-sm"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
-                    className="rounded-xl text-sm font-semibold bg-amber-500 text-slate-950 hover:bg-amber-600 gap-2"
+                    className="w-full sm:w-auto rounded-xl text-sm font-semibold bg-amber-500 text-slate-950 hover:bg-amber-600 gap-2"
                   >
                     <Send className="w-4 h-4" /> Post Announcement
                   </Button>
@@ -375,49 +380,49 @@ export default function ClassAnnouncementsUI() {
         </div>
 
         {/* Announcements List */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {announcements.map((item) => (
             <div
               key={item.id}
-              className={`relative bg-white dark:bg-zinc-900/70 border rounded-2xl p-6 transition-all duration-300 space-y-4 ${
+              className={`relative bg-white dark:bg-zinc-900/70 border rounded-2xl p-4 sm:p-6 transition-all duration-300 space-y-3 sm:space-y-4 ${
                 item.isPinned
                   ? "border-amber-500/50 shadow-md shadow-amber-500/5"
                   : "border-slate-200 dark:border-zinc-800"
               }`}
             >
               {/* Header Info */}
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-500/20">
-                    {renderIcon(item.iconName, "w-6 h-6")}
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 sm:p-2.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-500/20 shrink-0 mt-0.5">
+                    {renderIcon(item.iconName, "w-5 h-5 sm:w-6 sm:h-6")}
                   </div>
-                  <div>
+                  <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                      <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 break-words">
                         {item.title}
                       </h2>
                       {item.isPinned && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2.5 py-0.5 rounded-full border border-amber-500/30 shrink-0">
                           <Pin className="w-3 h-3" /> Pinned
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-slate-400 dark:text-zinc-500 mt-1">
-                      <span className="flex items-center gap-1">
+                    <div className="flex items-center gap-x-2 gap-y-1 text-xs text-slate-400 dark:text-zinc-500 flex-wrap">
+                      <span className="flex items-center gap-1 shrink-0">
                         <Users className="w-3.5 h-3.5" /> {item.targetGroup}
                       </span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
+                      <span className="hidden sm:inline">•</span>
+                      <span className="flex items-center gap-1 shrink-0">
                         <Calendar className="w-3.5 h-3.5" /> {item.date}
                       </span>
-                      <span>•</span>
-                      <span>By {item.author}</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span className="shrink-0">By {item.author}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Quick Action Controls */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center justify-end sm:justify-start gap-1 self-end sm:self-start border-t sm:border-t-0 pt-2 sm:pt-0 w-full sm:w-auto">
                   <button
                     onClick={() => togglePin(item.id)}
                     className={`p-2 rounded-lg transition-colors ${
@@ -425,9 +430,7 @@ export default function ClassAnnouncementsUI() {
                         ? "text-amber-500 hover:bg-amber-500/10"
                         : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800"
                     }`}
-                    title={
-                      item.isPinned ? "Unpin Notice" : "Pin to top"
-                    }
+                    title={item.isPinned ? "Unpin Notice" : "Pin to top"}
                   >
                     <Pin className="w-4 h-4" />
                   </button>
@@ -442,13 +445,13 @@ export default function ClassAnnouncementsUI() {
               </div>
 
               {/* Text Body */}
-              <p className="text-sm text-slate-600 dark:text-zinc-300 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-300 leading-relaxed break-words">
                 {item.content}
               </p>
 
               {/* Attached Banner Image */}
               {item.imageUrl && (
-                <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-800 max-h-80 bg-black/5">
+                <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-800 max-h-60 sm:max-h-80 bg-black/5">
                   <img
                     src={item.imageUrl}
                     alt={item.title}
@@ -461,9 +464,9 @@ export default function ClassAnnouncementsUI() {
 
           {/* Empty State */}
           {announcements.length === 0 && (
-            <div className="text-center py-16 border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl">
-              <Megaphone className="w-10 h-10 text-slate-400 dark:text-zinc-600 mx-auto mb-3" />
-              <p className="text-slate-500 dark:text-zinc-400 text-sm">
+            <div className="text-center py-12 sm:py-16 border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl p-4">
+              <Megaphone className="w-9 h-9 sm:w-10 sm:h-10 text-slate-400 dark:text-zinc-600 mx-auto mb-3" />
+              <p className="text-slate-500 dark:text-zinc-400 text-xs sm:text-sm">
                 No announcements posted yet. Click above to broadcast one.
               </p>
             </div>
