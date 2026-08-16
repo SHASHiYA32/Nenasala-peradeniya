@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { createClient } from "@supabase/supabase-js";
 import {
   BookOpen,
   Layers,
@@ -12,190 +13,49 @@ import {
   Clock,
   Award,
   DollarSign,
-  Users,
   Edit2,
-  CheckCircle2,
-  XCircle,
-  Building2,
   BookMarked,
   GraduationCap,
   Image as ImageIcon,
+  Loader2,
+  Upload,
 } from "lucide-react";
 
-// Types
-interface Course {
-  id: string;
-  code: string;
-  title: string;
-  program: string;
-  department: string;
-  instructor: string;
-  duration: string;
-  credits: number;
-  fee: string;
-  status: "active" | "inactive";
-  description: string;
-  image?: string; // Added image property
-}
+// Initialize Supabase Client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+);
 
 interface Programme {
   id: string;
-  code: string;
-  title: string;
-  degreeLevel: "BSc" | "MSc" | "Diploma" | "Certificate";
-  department: string;
-  durationYears: string;
-  totalCredits: number;
-  totalStudents: number;
-  includedCourses: string[];
-  status: "active" | "inactive";
-  overview: string;
+  created_at?: string;
+  programme_title: string;
+  programme_code: string;
+  duration: number | null;
+  programme_overview: string;
+  awrding_body: string;
 }
 
-// Initial Mock Data
-const INITIAL_COURSES: Course[] = [
-  {
-    id: "CRS-101",
-    code: "CS-401",
-    title: "Advanced Deep Learning",
-    program: "BSc in Artificial Intelligence",
-    department: "Artificial Intelligence",
-    instructor: "Dr. Marcus Vance",
-    duration: "14 Weeks",
-    credits: 4,
-    fee: "$1,200",
-    status: "active",
-    description:
-      "Deep dive into convolutional networks, transformers, and generative adversarial networks (GANs).",
-    image:
-      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "CRS-102",
-    code: "SEC-502",
-    title: "Ethical Hacking & Cryptography",
-    program: "BSc in Cybersecurity",
-    department: "Cybersecurity",
-    instructor: "Prof. Sarah Jenkins",
-    duration: "12 Weeks",
-    credits: 3,
-    fee: "$1,100",
-    status: "active",
-    description:
-      "Hands-on penetration testing methodologies, network defense, and modern cryptographic protocols.",
-    image:
-      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "CRS-103",
-    code: "SE-302",
-    title: "Cloud Native Microservices",
-    program: "BSc in Software Engineering",
-    department: "Software Engineering",
-    instructor: "Alan Turing-Reyes",
-    duration: "16 Weeks",
-    credits: 4,
-    fee: "$1,350",
-    status: "active",
-    description:
-      "Building scalable distributed architectures using Docker, Kubernetes, and serverless computing.",
-    image:
-      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "CRS-104",
-    code: "DS-301",
-    title: "Big Data & Predictive Analytics",
-    program: "MSc in Data Science",
-    department: "Data Science",
-    instructor: "Dr. Elena Rostova",
-    duration: "10 Weeks",
-    credits: 3,
-    fee: "$950",
-    status: "inactive",
-    description:
-      "Statistical modeling and high-throughput data processing using Apache Spark and Hadoop ecosystem.",
-    image:
-      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
-  },
-];
-
-const INITIAL_PROGRAMMES: Programme[] = [
-  {
-    id: "PRG-201",
-    code: "BS-AI",
-    title: "BSc in Artificial Intelligence",
-    degreeLevel: "BSc",
-    department: "Artificial Intelligence",
-    durationYears: "4 Years",
-    totalCredits: 120,
-    totalStudents: 145,
-    includedCourses: [
-      "CS-401 Deep Learning",
-      "AI-101 Python for AI",
-      "CS-202 Neural Networks",
-    ],
-    status: "active",
-    overview:
-      "Comprehensive undergraduate program covering artificial neural systems, robotics, and machine learning foundation.",
-  },
-  {
-    id: "PRG-202",
-    code: "BS-CYBER",
-    title: "BSc in Cybersecurity & Defense",
-    degreeLevel: "BSc",
-    department: "Cybersecurity",
-    durationYears: "4 Years",
-    totalCredits: 124,
-    totalStudents: 190,
-    includedCourses: [
-      "SEC-502 Ethical Hacking",
-      "SEC-201 Network Defense",
-      "SEC-303 Digital Forensics",
-    ],
-    status: "active",
-    overview:
-      "Specialized defense curriculum tailored to counter advanced cyber threats and secure cloud infrastructure.",
-  },
-  {
-    id: "PRG-203",
-    code: "MS-DS",
-    title: "MSc in Data Science & Machine Learning",
-    degreeLevel: "MSc",
-    department: "Data Science",
-    durationYears: "2 Years",
-    totalCredits: 60,
-    totalStudents: 85,
-    includedCourses: [
-      "DS-301 Big Data Analytics",
-      "MATH-501 Advanced Statistics",
-    ],
-    status: "active",
-    overview:
-      "Postgraduate degree focusing on big data infrastructure, deep learning algorithms, and enterprise analytics.",
-  },
-  {
-    id: "PRG-204",
-    code: "CERT-DEV",
-    title: "Certificate in Cloud Native Architecture",
-    degreeLevel: "Certificate",
-    department: "Software Engineering",
-    durationYears: "6 Months",
-    totalCredits: 18,
-    totalStudents: 60,
-    includedCourses: ["SE-302 Cloud Native Microservices"],
-    status: "inactive",
-    overview:
-      "Accelerated professional program designed for software engineers transitioning to cloud DevOps architecture.",
-  },
-];
+interface Course {
+  id: string;
+  created_at?: string;
+  course_code: string;
+  course_name: string;
+  course_amount: string;
+  cover_image: string;
+  programme_id: string | null;
+  course_desc: string;
+  programmes?: Programme | null;
+}
 
 export default function AcademicProgramsCourses() {
   const [activeTab, setActiveTab] = useState<"courses" | "programmes">(
     "courses",
   );
-  const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
-  const [programmes, setProgrammes] = useState<Programme[]>(INITIAL_PROGRAMMES);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [programmes, setProgrammes] = useState<Programme[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Slide-Over Sheet details
@@ -207,137 +67,209 @@ export default function AcademicProgramsCourses() {
   // Modal Dialogs
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
-  // Form States
+  // Form States mapped to database schema
   const [courseFormData, setCourseFormData] = useState({
-    code: "",
-    title: "",
-    program: "",
-    department: "Computer Science",
-    instructor: "",
-    duration: "",
-    credits: 3,
-    fee: "",
-    description: "",
-    image: "",
-    status: "active" as "active" | "inactive",
+    course_code: "",
+    course_name: "",
+    course_amount: "",
+    cover_image: "",
+    programme_id: "",
+    course_desc: "",
   });
 
-  const [programmeFormData, setProgrammeFormData] = useState({
-    code: "",
-    title: "",
-    degreeLevel: "BSc" as "BSc" | "MSc" | "Diploma" | "Certificate",
-    department: "Computer Science",
-    durationYears: "4 Years",
-    totalCredits: 120,
-    includedCourses: "",
-    overview: "",
-    status: "active" as "active" | "inactive",
+  const [programmeFormData, setProgrammeFormData] = useState<{
+    programme_code: string;
+    programme_title: string;
+    duration: number | null;
+    awrding_body: string;
+    programme_overview: string;
+  }>({
+    programme_code: "",
+    programme_title: "",
+    duration: 1,
+    awrding_body: "",
+    programme_overview: "",
   });
+
+  // Fetch Data from DB
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Fetch Programmes
+      const { data: progData, error: progErr } = await supabase
+        .from("programmes")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (progErr) throw progErr;
+      setProgrammes(progData || []);
+
+      // Fetch Courses joined with Programme details
+      const { data: crsData, error: crsErr } = await supabase
+        .from("courses")
+        .select("*, programmes(*)")
+        .order("created_at", { ascending: false });
+
+      if (crsErr) throw crsErr;
+      setCourses(crsData || []);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Image Upload Handler for Supabase Storage
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      setUploadingImage(true);
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `covers/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("course-covers")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("course-covers")
+        .getPublicUrl(filePath);
+
+      setCourseFormData((prev) => ({
+        ...prev,
+        cover_image: data.publicUrl,
+      }));
+    } catch (err) {
+      console.error("Error uploading image:", err);
+      alert(
+        "Failed to upload image. Make sure 'course-covers' storage bucket exists and is public.",
+      );
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   // Filtered Lists
   const filteredCourses = useMemo(() => {
     return courses.filter(
       (c) =>
-        c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.program.toLowerCase().includes(searchQuery.toLowerCase()),
+        (c.course_name?.toLowerCase() || "").includes(
+          searchQuery.toLowerCase(),
+        ) ||
+        (c.course_code?.toLowerCase() || "").includes(
+          searchQuery.toLowerCase(),
+        ) ||
+        (c.programmes?.programme_title?.toLowerCase() || "").includes(
+          searchQuery.toLowerCase(),
+        ),
     );
   }, [courses, searchQuery]);
 
   const filteredProgrammes = useMemo(() => {
     return programmes.filter(
       (p) =>
-        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.degreeLevel.toLowerCase().includes(searchQuery.toLowerCase()),
+        (p.programme_title?.toLowerCase() || "").includes(
+          searchQuery.toLowerCase(),
+        ) ||
+        (p.programme_code?.toLowerCase() || "").includes(
+          searchQuery.toLowerCase(),
+        ) ||
+        (p.awrding_body?.toLowerCase() || "").includes(
+          searchQuery.toLowerCase(),
+        ),
     );
   }, [programmes, searchQuery]);
 
   // Form Resetters
   const resetCourseForm = () => {
     setCourseFormData({
-      code: "",
-      title: "",
-      program: "",
-      department: "Computer Science",
-      instructor: "",
-      duration: "",
-      credits: 3,
-      fee: "",
-      description: "",
-      image: "",
-      status: "active",
+      course_code: "",
+      course_name: "",
+      course_amount: "",
+      cover_image: "",
+      programme_id: programmes.length > 0 ? programmes[0].id : "",
+      course_desc: "",
     });
   };
 
   const resetProgrammeForm = () => {
     setProgrammeFormData({
-      code: "",
-      title: "",
-      degreeLevel: "BSc",
-      department: "Computer Science",
-      durationYears: "4 Years",
-      totalCredits: 120,
-      includedCourses: "",
-      overview: "",
-      status: "active",
+      programme_code: "",
+      programme_title: "",
+      duration: 1,
+      awrding_body: "",
+      programme_overview: "",
     });
   };
 
   // Submit Handlers
-  const handleSaveCourse = (e: React.FormEvent) => {
+  const handleSaveCourse = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!courseFormData.title || !courseFormData.code) return;
+    if (!courseFormData.course_name || !courseFormData.course_code) return;
+
+    setSubmitting(true);
+    const payload = {
+      ...courseFormData,
+      programme_id: courseFormData.programme_id || null,
+    };
 
     if (isEditing && selectedCourse) {
-      const updated = courses.map((item) =>
-        item.id === selectedCourse.id ? { ...item, ...courseFormData } : item,
-      );
-      setCourses(updated);
-      setSelectedCourse({ ...selectedCourse, ...courseFormData });
+      const { data, error } = await supabase
+        .from("courses")
+        .update(payload)
+        .eq("id", selectedCourse.id)
+        .select("*, programmes(*)")
+        .single();
+
+      if (!error && data) {
+        setSelectedCourse(data);
+      }
     } else {
-      const newCourse: Course = {
-        id: `CRS-${100 + courses.length + 1}`,
-        ...courseFormData,
-      };
-      setCourses([newCourse, ...courses]);
+      await supabase.from("courses").insert([payload]);
     }
+
+    setSubmitting(false);
     setIsModalOpen(false);
+    fetchData();
   };
 
-  const handleSaveProgramme = (e: React.FormEvent) => {
+  const handleSaveProgramme = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!programmeFormData.title || !programmeFormData.code) return;
+    if (!programmeFormData.programme_title || !programmeFormData.programme_code)
+      return;
 
-    const formattedCourses = programmeFormData.includedCourses
-      ? programmeFormData.includedCourses.split(",").map((c) => c.trim())
-      : [];
-
+    setSubmitting(true);
     if (isEditing && selectedProgramme) {
-      const updated = programmes.map((item) =>
-        item.id === selectedProgramme.id
-          ? { ...item, ...programmeFormData, includedCourses: formattedCourses }
-          : item,
-      );
-      setProgrammes(updated);
-      setSelectedProgramme({
-        ...selectedProgramme,
-        ...programmeFormData,
-        includedCourses: formattedCourses,
-      });
+      const { data, error } = await supabase
+        .from("programmes")
+        .update(programmeFormData)
+        .eq("id", selectedProgramme.id)
+        .select()
+        .single();
+
+      if (!error && data) {
+        setSelectedProgramme(data);
+      }
     } else {
-      const newProgramme: Programme = {
-        id: `PRG-${200 + programmes.length + 1}`,
-        totalStudents: 0,
-        ...programmeFormData,
-        includedCourses: formattedCourses,
-      };
-      setProgrammes([newProgramme, ...programmes]);
+      await supabase.from("programmes").insert([programmeFormData]);
     }
+
+    setSubmitting(false);
     setIsModalOpen(false);
+    fetchData();
   };
 
   return (
@@ -354,14 +286,13 @@ export default function AcademicProgramsCourses() {
                 Academic Curriculum
               </h1>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Manage degree programmes, course modules, and credit allocations
+                Manage degree programmes and course modules
               </p>
             </div>
           </div>
 
           {/* Action & Toggle Controls */}
           <div className="flex flex-wrap items-center gap-3">
-            {/* Segmented Button Group */}
             <div className="p-1 rounded-xl bg-zinc-200/80 dark:bg-zinc-900 border border-zinc-300/60 dark:border-zinc-800 flex items-center shadow-inner">
               <button
                 onClick={() => {
@@ -394,7 +325,6 @@ export default function AcademicProgramsCourses() {
               </button>
             </div>
 
-            {/* Contextual Register Button */}
             <button
               onClick={() => {
                 setIsEditing(false);
@@ -412,54 +342,6 @@ export default function AcademicProgramsCourses() {
           </div>
         </div>
 
-        {/* Top Summary Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800/80 shadow-sm relative overflow-hidden group">
-            <div className="flex items-center gap-3 text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-2">
-              <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
-                <BookMarked className="w-4 h-4" />
-              </div>
-              Total Active Courses
-            </div>
-            <div className="text-3xl font-extrabold tracking-tight">
-              {courses.filter((c) => c.status === "active").length}
-            </div>
-            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
-              Across all academic faculties
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800/80 shadow-sm relative overflow-hidden group">
-            <div className="flex items-center gap-3 text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-2">
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
-                <Layers className="w-4 h-4" />
-              </div>
-              Degree Programmes
-            </div>
-            <div className="text-3xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400">
-              {programmes.filter((p) => p.status === "active").length}
-            </div>
-            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
-              Undergraduate & Master degrees
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800/80 shadow-sm relative overflow-hidden group">
-            <div className="flex items-center gap-3 text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-2">
-              <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
-                <Users className="w-4 h-4" />
-              </div>
-              Total Enrolled Students
-            </div>
-            <div className="text-3xl font-extrabold tracking-tight">
-              {programmes.reduce((acc, curr) => acc + curr.totalStudents, 0)}
-            </div>
-            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
-              Enrolled across all degree paths
-            </p>
-          </div>
-        </div>
-
         {/* Filter Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative w-full sm:w-96">
@@ -468,8 +350,8 @@ export default function AcademicProgramsCourses() {
               type="text"
               placeholder={
                 activeTab === "courses"
-                  ? "Search course title, code, dept..."
-                  : "Search programme degree, code, dept..."
+                  ? "Search course title, code..."
+                  : "Search programme title, code, awarding body..."
               }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -487,169 +369,175 @@ export default function AcademicProgramsCourses() {
           </div>
         </div>
 
-        {/* ==================== COURSES VIEW ==================== */}
-        {activeTab === "courses" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCourses.map((crs) => (
-              <div
-                key={crs.id}
-                onClick={() => setSelectedCourse(crs)}
-                className="group cursor-pointer bg-white dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-800/80 hover:border-amber-500/50 dark:hover:border-amber-500/40 rounded-2xl overflow-hidden transition-all duration-200 shadow-sm hover:shadow-xl hover:-translate-y-1 relative flex flex-col justify-between"
-              >
-                <div>
-                  {/* Banner Image Container */}
-                  <div className="h-44 w-full bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden">
-                    {crs.image ? (
-                      <img
-                        src={crs.image}
-                        alt={crs.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400">
-                        <ImageIcon className="w-8 h-8 mb-1 opacity-50" />
-                        <span className="text-xs font-medium">No Image</span>
-                      </div>
-                    )}
-                    <div className="absolute top-3 left-3">
-                      <span className="font-mono text-xs px-2.5 py-1 rounded-md bg-zinc-950/70 backdrop-blur-md text-amber-400 font-bold border border-amber-500/30">
-                        {crs.code}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-6">
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <h3 className="font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-amber-500 transition-colors text-base line-clamp-1">
-                        {crs.title}
-                      </h3>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedCourse(crs);
-                        }}
-                        className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all -mr-1 -mt-1"
-                      >
-                        <MoreVertical className="w-5 h-5" />
-                      </button>
-                    </div>
-
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-4">
-                      {crs.description}
-                    </p>
-
-                    <div className="space-y-2 mb-2 text-xs text-zinc-600 dark:text-zinc-400">
-                      <div className="flex items-center gap-2">
-                        <GraduationCap className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span className="truncate">{crs.program}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span>
-                          {crs.duration} ({crs.credits} Credits)
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="px-6 pb-6 pt-0">
-                  <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between text-xs">
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100">
-                      {crs.fee}
-                    </span>
-
-                    {crs.status === "active" ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-medium">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                        Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[11px] font-medium">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                        Inactive
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+        {/* Loading Indicator */}
+        {loading && (
+          <div className="flex justify-center items-center py-20 text-amber-500">
+            <Loader2 className="w-8 h-8 animate-spin" />
           </div>
         )}
 
-        {/* ==================== PROGRAMMES VIEW ==================== */}
-        {activeTab === "programmes" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProgrammes.map((prg) => (
-              <div
-                key={prg.id}
-                onClick={() => setSelectedProgramme(prg)}
-                className="group cursor-pointer bg-white dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-800/80 hover:border-amber-500/50 dark:hover:border-amber-500/40 rounded-2xl p-6 transition-all duration-200 shadow-sm hover:shadow-xl hover:-translate-y-1 relative flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-3 mb-4">
-                    <div>
-                      <span className="font-mono text-xs px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
-                        {prg.degreeLevel} - {prg.code}
-                      </span>
-                      <h3 className="font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-amber-500 transition-colors mt-2 text-base">
-                        {prg.title}
-                      </h3>
-                    </div>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedProgramme(prg);
-                      }}
-                      className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
-                    >
-                      <MoreVertical className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-4">
-                    {prg.overview}
-                  </p>
-
-                  <div className="space-y-1.5 mb-6">
-                    <span className="text-[11px] uppercase tracking-wider text-zinc-400 font-bold">
-                      Included Modules
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {prg.includedCourses.map((c, i) => (
-                        <span
-                          key={i}
-                          className="text-xs px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20"
-                        >
-                          {c}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                  <span className="font-semibold text-zinc-800 dark:text-zinc-200">
-                    {prg.durationYears} ({prg.totalCredits} Credits)
-                  </span>
-
-                  {prg.status === "active" ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                      Active
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[11px] font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                      Inactive
-                    </span>
-                  )}
-                </div>
+        {/* ==================== COURSES VIEW ==================== */}
+        {!loading && activeTab === "courses" && (
+          <>
+            {filteredCourses.length === 0 ? (
+              <div className="text-center py-20 bg-white dark:bg-zinc-900/50 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800">
+                <BookMarked className="w-12 h-12 mx-auto text-zinc-400 mb-3 opacity-50" />
+                <p className="text-lg font-semibold text-zinc-700 dark:text-zinc-300">
+                  No courses in here
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Click on "Add Course" to create your first entry.
+                </p>
               </div>
-            ))}
-          </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCourses.map((crs) => (
+                  <div
+                    key={crs.id}
+                    onClick={() => setSelectedCourse(crs)}
+                    className="group cursor-pointer bg-white dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-800/80 hover:border-amber-500/50 dark:hover:border-amber-500/40 rounded-2xl overflow-hidden transition-all duration-200 shadow-sm hover:shadow-xl hover:-translate-y-1 relative flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="h-44 w-full bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden">
+                        {crs.cover_image ? (
+                          <img
+                            src={crs.cover_image}
+                            alt={crs.course_name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400">
+                            <ImageIcon className="w-8 h-8 mb-1 opacity-50" />
+                            <span className="text-xs font-medium">
+                              No Image
+                            </span>
+                          </div>
+                        )}
+                        <div className="absolute top-3 left-3">
+                          <span className="font-mono text-xs px-2.5 py-1 rounded-md bg-zinc-950/70 backdrop-blur-md text-amber-400 font-bold border border-amber-500/30">
+                            {crs.course_code}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-6">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <h3 className="font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-amber-500 transition-colors text-base line-clamp-1">
+                            {crs.course_name}
+                          </h3>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCourse(crs);
+                            }}
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all -mr-1 -mt-1"
+                          >
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
+                        </div>
+
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-4">
+                          {crs.course_desc || "No description provided."}
+                        </p>
+
+                        <div className="space-y-2 mb-2 text-xs text-zinc-600 dark:text-zinc-400">
+                          <div className="flex items-center gap-2">
+                            <GraduationCap className="w-4 h-4 text-amber-500 shrink-0" />
+                            <span className="truncate font-semibold">
+                              {crs.programmes?.programme_title ||
+                                "Unassigned Programme"}
+                            </span>
+                          </div>
+                          {crs.programmes?.awrding_body && (
+                            <div className="flex items-center gap-2">
+                              <Award className="w-4 h-4 text-amber-500 shrink-0" />
+                              <span className="truncate">
+                                {crs.programmes.awrding_body}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="px-6 pb-6 pt-0">
+                      <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center justify-end">
+                        <span className="font-bold text-amber-500 dark:text-amber-500">
+                          LKR{" "} {crs.course_amount || "N/A"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ==================== PROGRAMMES VIEW ==================== */}
+        {!loading && activeTab === "programmes" && (
+          <>
+            {filteredProgrammes.length === 0 ? (
+              <div className="text-center py-20 bg-white dark:bg-zinc-900/50 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800">
+                <Layers className="w-12 h-12 mx-auto text-zinc-400 mb-3 opacity-50" />
+                <p className="text-lg font-semibold text-zinc-700 dark:text-zinc-300">
+                  No programmes in there
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Click on "Add Programme" to create your first entry.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProgrammes.map((prg) => (
+                  <div
+                    key={prg.id}
+                    onClick={() => setSelectedProgramme(prg)}
+                    className="group cursor-pointer bg-white dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-800/80 hover:border-amber-500/50 dark:hover:border-amber-500/40 rounded-2xl p-6 transition-all duration-200 shadow-sm hover:shadow-xl hover:-translate-y-1 relative flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div>
+                          <span className="font-mono text-xs px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
+                            {prg.programme_code}
+                          </span>
+                          <h3 className="font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-amber-500 transition-colors mt-2 text-base">
+                            {prg.programme_title}
+                          </h3>
+                        </div>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedProgramme(prg);
+                          }}
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+                        >
+                          <MoreVertical className="w-5 h-5" />
+                        </button>
+                      </div>
+
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-3 mb-4">
+                        {prg.programme_overview || "No overview provided."}
+                      </p>
+                    </div>
+
+                    <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                      <span className="font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-amber-500" />
+                        {prg.duration ? `${prg.duration} Year(s)` : "N/A"}
+                      </span>
+                      {prg.awrding_body && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-semibold border border-amber-500/20">
+                          {prg.awrding_body}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -658,7 +546,6 @@ export default function AcademicProgramsCourses() {
         <div className="fixed inset-0 z-50 flex justify-end bg-zinc-950/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 w-full max-w-md h-full shadow-2xl flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-300">
             <div>
-              {/* Sheet Header */}
               <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
                 <span className="text-xs font-mono font-bold text-amber-500 uppercase tracking-widest">
                   {selectedCourse ? "Course Details" : "Programme Overview"}
@@ -669,30 +556,21 @@ export default function AcademicProgramsCourses() {
                       setIsEditing(true);
                       if (selectedCourse) {
                         setCourseFormData({
-                          code: selectedCourse.code,
-                          title: selectedCourse.title,
-                          program: selectedCourse.program,
-                          department: selectedCourse.department,
-                          instructor: selectedCourse.instructor,
-                          duration: selectedCourse.duration,
-                          credits: selectedCourse.credits,
-                          fee: selectedCourse.fee,
-                          description: selectedCourse.description,
-                          image: selectedCourse.image || "",
-                          status: selectedCourse.status,
+                          course_code: selectedCourse.course_code,
+                          course_name: selectedCourse.course_name,
+                          course_amount: selectedCourse.course_amount || "",
+                          cover_image: selectedCourse.cover_image || "",
+                          programme_id: selectedCourse.programme_id || "",
+                          course_desc: selectedCourse.course_desc || "",
                         });
                       } else if (selectedProgramme) {
                         setProgrammeFormData({
-                          code: selectedProgramme.code,
-                          title: selectedProgramme.title,
-                          degreeLevel: selectedProgramme.degreeLevel,
-                          department: selectedProgramme.department,
-                          durationYears: selectedProgramme.durationYears,
-                          totalCredits: selectedProgramme.totalCredits,
-                          includedCourses:
-                            selectedProgramme.includedCourses.join(", "),
-                          overview: selectedProgramme.overview,
-                          status: selectedProgramme.status,
+                          programme_code: selectedProgramme.programme_code,
+                          programme_title: selectedProgramme.programme_title,
+                          duration: selectedProgramme.duration || 1,
+                          awrding_body: selectedProgramme.awrding_body || "",
+                          programme_overview:
+                            selectedProgramme.programme_overview || "",
                         });
                       }
                       setIsModalOpen(true);
@@ -714,14 +592,14 @@ export default function AcademicProgramsCourses() {
                 </div>
               </div>
 
-              {/* Sheet Body: Course View */}
+              {/* Course Detail View */}
               {selectedCourse && (
                 <div>
-                  {selectedCourse.image && (
+                  {selectedCourse.cover_image && (
                     <div className="h-48 w-full bg-zinc-100 dark:bg-zinc-800">
                       <img
-                        src={selectedCourse.image}
-                        alt={selectedCourse.title}
+                        src={selectedCourse.cover_image}
+                        alt={selectedCourse.course_name}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -729,70 +607,51 @@ export default function AcademicProgramsCourses() {
                   <div className="p-6 space-y-6">
                     <div>
                       <span className="font-mono text-xs px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20">
-                        {selectedCourse.code}
+                        {selectedCourse.course_code}
                       </span>
                       <h2 className="text-xl font-bold mt-2">
-                        {selectedCourse.title}
+                        {selectedCourse.course_name}
                       </h2>
-                      <div className="mt-2">
-                        {selectedCourse.status === "active" ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-xs font-medium">
-                            <CheckCircle2 className="w-3 h-3" /> Active Module
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-xs font-medium">
-                            <XCircle className="w-3 h-3" /> Inactive
-                          </span>
-                        )}
-                      </div>
                     </div>
 
                     <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
                       <span className="font-bold text-zinc-900 dark:text-zinc-100 block mb-1">
-                        Module Syllabus Overview
+                        Course Description
                       </span>
-                      {selectedCourse.description}
+                      {selectedCourse.course_desc || "N/A"}
                     </div>
 
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center justify-between py-2 border-b border-zinc-100 dark:border-zinc-800/60">
                         <span className="text-zinc-500 text-xs flex items-center gap-2">
                           <GraduationCap className="w-4 h-4 text-amber-500" />{" "}
-                          Parent Degree
+                          Programme
                         </span>
                         <span className="font-medium text-xs">
-                          {selectedCourse.program}
+                          {selectedCourse.programmes?.programme_title ||
+                            "Unassigned"}
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between py-2 border-b border-zinc-100 dark:border-zinc-800/60">
-                        <span className="text-zinc-500 text-xs flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-amber-500" />{" "}
-                          Department
-                        </span>
-                        <span className="font-medium text-xs">
-                          {selectedCourse.department}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between py-2 border-b border-zinc-100 dark:border-zinc-800/60">
-                        <span className="text-zinc-500 text-xs flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-amber-500" /> Duration
-                          & Credits
-                        </span>
-                        <span className="font-medium text-xs">
-                          {selectedCourse.duration} ({selectedCourse.credits}{" "}
-                          Credits)
-                        </span>
-                      </div>
+                      {selectedCourse.programmes?.awrding_body && (
+                        <div className="flex items-center justify-between py-2 border-b border-zinc-100 dark:border-zinc-800/60">
+                          <span className="text-zinc-500 text-xs flex items-center gap-2">
+                            <Award className="w-4 h-4 text-amber-500" />{" "}
+                            Awarding Body
+                          </span>
+                          <span className="font-medium text-xs">
+                            {selectedCourse.programmes.awrding_body}
+                          </span>
+                        </div>
+                      )}
 
                       <div className="flex items-center justify-between py-2 border-b border-zinc-100 dark:border-zinc-800/60">
                         <span className="text-zinc-500 text-xs flex items-center gap-2">
                           <DollarSign className="w-4 h-4 text-amber-500" />{" "}
-                          Module Fee
+                          Amount
                         </span>
                         <span className="font-medium text-xs">
-                          {selectedCourse.fee}
+                          LKR{" "}{selectedCourse.course_amount || "N/A"}
                         </span>
                       </div>
                     </div>
@@ -800,65 +659,44 @@ export default function AcademicProgramsCourses() {
                 </div>
               )}
 
-              {/* Sheet Body: Programme View */}
+              {/* Programme Detail View */}
               {selectedProgramme && (
                 <div className="p-6 space-y-6">
                   <div>
                     <span className="font-mono text-xs px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
-                      {selectedProgramme.degreeLevel} - {selectedProgramme.code}
+                      {selectedProgramme.programme_code}
                     </span>
                     <h2 className="text-xl font-bold mt-2">
-                      {selectedProgramme.title}
+                      {selectedProgramme.programme_title}
                     </h2>
-                    <div className="mt-2">
-                      {selectedProgramme.status === "active" ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-xs font-medium">
-                          <CheckCircle2 className="w-3 h-3" /> Active Programme
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-xs font-medium">
-                          <XCircle className="w-3 h-3" /> Inactive
-                        </span>
-                      )}
-                    </div>
                   </div>
 
                   <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
                     <span className="font-bold text-zinc-900 dark:text-zinc-100 block mb-1">
-                      Programme Summary
+                      Programme Overview
                     </span>
-                    {selectedProgramme.overview}
+                    {selectedProgramme.programme_overview || "N/A"}
                   </div>
 
                   <div className="space-y-3 text-sm">
                     <div className="flex items-center justify-between py-2 border-b border-zinc-100 dark:border-zinc-800/60">
                       <span className="text-zinc-500 text-xs flex items-center gap-2">
-                        <Award className="w-4 h-4 text-amber-500" /> Degree
-                        Award
+                        <Award className="w-4 h-4 text-amber-500" /> Awarding
+                        Body
                       </span>
                       <span className="font-medium text-xs">
-                        {selectedProgramme.degreeLevel}
+                        {selectedProgramme.awrding_body || "N/A"}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between py-2 border-b border-zinc-100 dark:border-zinc-800/60">
                       <span className="text-zinc-500 text-xs flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-amber-500" /> Duration /
-                        Credits
+                        <Clock className="w-4 h-4 text-amber-500" /> Duration
                       </span>
                       <span className="font-medium text-xs">
-                        {selectedProgramme.durationYears} (
-                        {selectedProgramme.totalCredits} Credits)
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between py-2 border-b border-zinc-100 dark:border-zinc-800/60">
-                      <span className="text-zinc-500 text-xs flex items-center gap-2">
-                        <Users className="w-4 h-4 text-amber-500" /> Enrolled
-                        Students
-                      </span>
-                      <span className="font-medium text-xs">
-                        {selectedProgramme.totalStudents} Active Students
+                        {selectedProgramme.duration
+                          ? `${selectedProgramme.duration} Months`
+                          : "N/A"}
                       </span>
                     </div>
                   </div>
@@ -917,11 +755,11 @@ export default function AcademicProgramsCourses() {
                       type="text"
                       required
                       placeholder="e.g. CS-401"
-                      value={courseFormData.code}
+                      value={courseFormData.course_code}
                       onChange={(e) =>
                         setCourseFormData({
                           ...courseFormData,
-                          code: e.target.value,
+                          course_code: e.target.value,
                         })
                       }
                       className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
@@ -930,16 +768,16 @@ export default function AcademicProgramsCourses() {
 
                   <div>
                     <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
-                      Course Fee ($)
+                      Course Amount
                     </label>
                     <input
                       type="text"
                       placeholder="e.g. $1,200"
-                      value={courseFormData.fee}
+                      value={courseFormData.course_amount}
                       onChange={(e) =>
                         setCourseFormData({
                           ...courseFormData,
-                          fee: e.target.value,
+                          course_amount: e.target.value,
                         })
                       }
                       className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
@@ -949,17 +787,17 @@ export default function AcademicProgramsCourses() {
 
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
-                    Course Title
+                    Course Name
                   </label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Advanced Deep Learning"
-                    value={courseFormData.title}
+                    value={courseFormData.course_name}
                     onChange={(e) =>
                       setCourseFormData({
                         ...courseFormData,
-                        title: e.target.value,
+                        course_name: e.target.value,
                       })
                     }
                     className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
@@ -968,72 +806,88 @@ export default function AcademicProgramsCourses() {
 
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
-                    Cover Image URL
+                    Programme
                   </label>
-                  <input
-                    type="url"
-                    placeholder="e.g. https://images.unsplash.com/photo-..."
-                    value={courseFormData.image}
+                  <select
+                    value={courseFormData.programme_id}
                     onChange={(e) =>
                       setCourseFormData({
                         ...courseFormData,
-                        image: e.target.value,
+                        programme_id: e.target.value,
                       })
                     }
                     className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
-                  />
+                  >
+                    <option value="">Select Programme</option>
+                    {programmes.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.programme_title}{" "}
+                        {p.awrding_body ? `(${p.awrding_body})` : ""}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
-                      Parent Programme
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. BSc in AI"
-                      value={courseFormData.program}
-                      onChange={(e) =>
-                        setCourseFormData({
-                          ...courseFormData,
-                          program: e.target.value,
-                        })
-                      }
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
-                    />
-                  </div>
+                {/* Cover Image Upload Control */}
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
+                    Cover Image
+                  </label>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
-                      Duration
+                  {courseFormData.cover_image && (
+                    <div className="relative mb-3 h-36 w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800 group">
+                      <img
+                        src={courseFormData.cover_image}
+                        alt="Cover Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCourseFormData({
+                            ...courseFormData,
+                            cover_image: "",
+                          })
+                        }
+                        className="absolute top-2 right-2 p-1.5 bg-zinc-950/70 hover:bg-zinc-950 text-white rounded-full transition-all"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3">
+                    <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 text-xs font-semibold text-zinc-600 dark:text-zinc-300 cursor-pointer transition-all">
+                      <Upload className="w-4 h-4 text-amber-500" />
+                      <span>
+                        {uploadingImage ? "Uploading..." : "Upload File"}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={uploadingImage}
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
                     </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 14 Weeks"
-                      value={courseFormData.duration}
-                      onChange={(e) =>
-                        setCourseFormData({
-                          ...courseFormData,
-                          duration: e.target.value,
-                        })
-                      }
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
-                    />
+                    {uploadingImage && (
+                      <Loader2 className="w-5 h-5 animate-spin text-amber-500 shrink-0" />
+                    )}
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
-                    Syllabus Overview
+                    Course Description
                   </label>
                   <textarea
                     rows={3}
-                    placeholder="Brief description of the course content..."
-                    value={courseFormData.description}
+                    placeholder="Course summary..."
+                    value={courseFormData.course_desc}
                     onChange={(e) =>
                       setCourseFormData({
                         ...courseFormData,
-                        description: e.target.value,
+                        course_desc: e.target.value,
                       })
                     }
                     className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
@@ -1050,8 +904,10 @@ export default function AcademicProgramsCourses() {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-amber-500 text-zinc-950 font-bold hover:bg-amber-400 shadow-md shadow-amber-500/20 transition-all"
+                    disabled={submitting || uploadingImage}
+                    className="px-5 py-2.5 rounded-xl bg-amber-500 text-zinc-950 font-bold hover:bg-amber-400 shadow-md shadow-amber-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
                   >
+                    {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                     {isEditing ? "Update Course" : "Save Course"}
                   </button>
                 </div>
@@ -1071,11 +927,11 @@ export default function AcademicProgramsCourses() {
                       type="text"
                       required
                       placeholder="e.g. BS-AI"
-                      value={programmeFormData.code}
+                      value={programmeFormData.programme_code}
                       onChange={(e) =>
                         setProgrammeFormData({
                           ...programmeFormData,
-                          code: e.target.value,
+                          programme_code: e.target.value,
                         })
                       }
                       className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
@@ -1084,27 +940,22 @@ export default function AcademicProgramsCourses() {
 
                   <div>
                     <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
-                      Degree Award Level
+                      Duration (Months)
                     </label>
-                    <select
-                      value={programmeFormData.degreeLevel}
+                    <input
+                      type="number"
+                      placeholder="e.g. 4"
+                      value={programmeFormData.duration || ""}
                       onChange={(e) =>
                         setProgrammeFormData({
                           ...programmeFormData,
-                          degreeLevel: e.target.value as
-                            | "BSc"
-                            | "MSc"
-                            | "Diploma"
-                            | "Certificate",
+                          duration: e.target.value
+                            ? Number(e.target.value)
+                            : null,
                         })
                       }
                       className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
-                    >
-                      <option value="BSc">BSc</option>
-                      <option value="MSc">MSc</option>
-                      <option value="Diploma">Diploma</option>
-                      <option value="Certificate">Certificate</option>
-                    </select>
+                    />
                   </div>
                 </div>
 
@@ -1116,71 +967,43 @@ export default function AcademicProgramsCourses() {
                     type="text"
                     required
                     placeholder="e.g. BSc in Artificial Intelligence"
-                    value={programmeFormData.title}
+                    value={programmeFormData.programme_title}
                     onChange={(e) =>
                       setProgrammeFormData({
                         ...programmeFormData,
-                        title: e.target.value,
+                        programme_title: e.target.value,
                       })
                     }
                     className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
                   />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
-                      Duration
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 4 Years"
-                      value={programmeFormData.durationYears}
-                      onChange={(e) =>
-                        setProgrammeFormData({
-                          ...programmeFormData,
-                          durationYears: e.target.value,
-                        })
-                      }
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
-                      Total Credits
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="120"
-                      value={programmeFormData.totalCredits}
-                      onChange={(e) =>
-                        setProgrammeFormData({
-                          ...programmeFormData,
-                          totalCredits: Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
-                    />
-                  </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
-                    Included Modules (comma-separated)
+                    Awarding Body
                   </label>
-                  <input
-                    type="text"
-                    placeholder="CS-401 Deep Learning, SEC-502 Ethical Hacking"
-                    value={programmeFormData.includedCourses}
+                  <select
+                    value={programmeFormData.awrding_body}
                     onChange={(e) =>
                       setProgrammeFormData({
                         ...programmeFormData,
-                        includedCourses: e.target.value,
+                        awrding_body: e.target.value,
                       })
                     }
                     className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
-                  />
+                  >
+                    <option value="">Select Awarding Body</option>
+                    <option value="University of Plymouth">
+                      University of Plymouth
+                    </option>
+                    <option value="Victoria University">
+                      Victoria University
+                    </option>
+                    <option value="Pearson BTEC">Pearson BTEC</option>
+                    <option value="Internal University">
+                      Internal University
+                    </option>
+                  </select>
                 </div>
 
                 <div>
@@ -1190,11 +1013,11 @@ export default function AcademicProgramsCourses() {
                   <textarea
                     rows={3}
                     placeholder="Degree path overview..."
-                    value={programmeFormData.overview}
+                    value={programmeFormData.programme_overview}
                     onChange={(e) =>
                       setProgrammeFormData({
                         ...programmeFormData,
-                        overview: e.target.value,
+                        programme_overview: e.target.value,
                       })
                     }
                     className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
@@ -1211,8 +1034,10 @@ export default function AcademicProgramsCourses() {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-amber-500 text-zinc-950 font-bold hover:bg-amber-400 shadow-md shadow-amber-500/20 transition-all"
+                    disabled={submitting}
+                    className="px-5 py-2.5 rounded-xl bg-amber-500 text-zinc-950 font-bold hover:bg-amber-400 shadow-md shadow-amber-500/20 transition-all flex items-center gap-2"
                   >
+                    {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                     {isEditing ? "Update Programme" : "Save Programme"}
                   </button>
                 </div>
