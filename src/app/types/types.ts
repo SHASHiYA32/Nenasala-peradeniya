@@ -24,4 +24,19 @@ export interface Task {
   status: "live" | "draft" | "cancelled" | "completed" | "expired";
 }
 
+export interface UserProfile {
+  id: string;
+  created_at: string;
+  full_name: string | null;
+  email: string | null;
+  role: string | null;
+  phone: string | null;
+  address: string | null;
+  gender: string | null;
+  status: string | null;
+  user_id: string | null;
+  temp_psw: string | null;
+  emp_id: string | null;
+}
+
 export type NewClassInput = Omit<ClassItem, 'id'>;
