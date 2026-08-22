@@ -19,6 +19,8 @@ import {
   Image as ImageIcon,
   Loader2,
   Upload,
+  UserCheck,
+  Users,
 } from "lucide-react";
 
 // Initialize Supabase Client
@@ -35,6 +37,13 @@ interface Programme {
   duration: number | null;
   programme_overview: string;
   awrding_body: string;
+}
+
+interface Instructor {
+  id: number;
+  full_name: string;
+  email: string;
+  assign_courses_ids: string[] | null;
 }
 
 interface Course {
@@ -55,6 +64,7 @@ export default function AcademicProgramsCourses() {
   );
   const [courses, setCourses] = useState<Course[]>([]);
   const [programmes, setProgrammes] = useState<Programme[]>([]);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -78,6 +88,7 @@ export default function AcademicProgramsCourses() {
     cover_image: "",
     programme_id: "",
     course_desc: "",
+    selected_instructor_ids: [] as number[],
   });
 
   const [programmeFormData, setProgrammeFormData] = useState<{
@@ -98,23 +109,27 @@ export default function AcademicProgramsCourses() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch Programmes
-      const { data: progData, error: progErr } = await supabase
-        .from("programmes")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const [progRes, crsRes, instRes] = await Promise.all([
+        supabase
+          .from("programmes")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("courses")
+          .select("*, programmes(*)")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("instructors")
+          .select("id, full_name, email, assign_courses_ids"),
+      ]);
 
-      if (progErr) throw progErr;
-      setProgrammes(progData || []);
+      if (progRes.error) throw progRes.error;
+      if (crsRes.error) throw crsRes.error;
+      if (instRes.error) throw instRes.error;
 
-      // Fetch Courses joined with Programme details
-      const { data: crsData, error: crsErr } = await supabase
-        .from("courses")
-        .select("*, programmes(*)")
-        .order("created_at", { ascending: false });
-
-      if (crsErr) throw crsErr;
-      setCourses(crsData || []);
+      setProgrammes(progRes.data || []);
+      setCourses(crsRes.data || []);
+      setInstructors(instRes.data || []);
     } catch (err) {
       console.error("Error fetching data:", err);
     } finally {
@@ -193,6 +208,19 @@ export default function AcademicProgramsCourses() {
     );
   }, [programmes, searchQuery]);
 
+  // Instructor Multi-Select Toggle Handler
+  const handleInstructorToggle = (instructorId: number) => {
+    setCourseFormData((prev) => {
+      const exists = prev.selected_instructor_ids.includes(instructorId);
+      return {
+        ...prev,
+        selected_instructor_ids: exists
+          ? prev.selected_instructor_ids.filter((id) => id !== instructorId)
+          : [...prev.selected_instructor_ids, instructorId],
+      };
+    });
+  };
+
   // Form Resetters
   const resetCourseForm = () => {
     setCourseFormData({
@@ -202,6 +230,7 @@ export default function AcademicProgramsCourses() {
       cover_image: "",
       programme_id: programmes.length > 0 ? programmes[0].id : "",
       course_desc: "",
+      selected_instructor_ids: [],
     });
   };
 
@@ -215,35 +244,104 @@ export default function AcademicProgramsCourses() {
     });
   };
 
+  // Edit Mode Setup
+  const handleEditCourseSetup = (crs: Course) => {
+    const assignedIds = instructors
+      .filter((inst) =>
+        Array.isArray(inst.assign_courses_ids)
+          ? inst.assign_courses_ids.includes(crs.id)
+          : false,
+      )
+      .map((inst) => inst.id);
+
+    setCourseFormData({
+      course_code: crs.course_code,
+      course_name: crs.course_name,
+      course_amount: crs.course_amount || "",
+      cover_image: crs.cover_image || "",
+      programme_id: crs.programme_id || "",
+      course_desc: crs.course_desc || "",
+      selected_instructor_ids: assignedIds,
+    });
+  };
+
   // Submit Handlers
   const handleSaveCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!courseFormData.course_name || !courseFormData.course_code) return;
 
     setSubmitting(true);
-    const payload = {
-      ...courseFormData,
-      programme_id: courseFormData.programme_id || null,
-    };
+    try {
+      const payload = {
+        course_code: courseFormData.course_code,
+        course_name: courseFormData.course_name,
+        course_amount: courseFormData.course_amount,
+        cover_image: courseFormData.cover_image,
+        programme_id: courseFormData.programme_id || null,
+        course_desc: courseFormData.course_desc,
+      };
 
-    if (isEditing && selectedCourse) {
-      const { data, error } = await supabase
-        .from("courses")
-        .update(payload)
-        .eq("id", selectedCourse.id)
-        .select("*, programmes(*)")
-        .single();
+      let courseId = selectedCourse?.id;
 
-      if (!error && data) {
+      if (isEditing && selectedCourse) {
+        const { data, error } = await supabase
+          .from("courses")
+          .update(payload)
+          .eq("id", selectedCourse.id)
+          .select("*, programmes(*)")
+          .single();
+
+        if (error) throw error;
         setSelectedCourse(data);
-      }
-    } else {
-      await supabase.from("courses").insert([payload]);
-    }
+      } else {
+        const { data, error } = await supabase
+          .from("courses")
+          .insert([payload])
+          .select("id")
+          .single();
 
-    setSubmitting(false);
-    setIsModalOpen(false);
-    fetchData();
+        if (error) throw error;
+        courseId = data.id;
+      }
+
+      if (courseId) {
+        // Sync Instructors Table assign_courses_ids JSONB array
+        for (const inst of instructors) {
+          const currentCourses: string[] = Array.isArray(
+            inst.assign_courses_ids,
+          )
+            ? inst.assign_courses_ids
+            : [];
+          const isSelected = courseFormData.selected_instructor_ids.includes(
+            inst.id,
+          );
+          const hasCourse = currentCourses.includes(courseId);
+
+          if (isSelected && !hasCourse) {
+            const updatedCourses = [...currentCourses, courseId];
+            await supabase
+              .from("instructors")
+              .update({ assign_courses_ids: updatedCourses })
+              .eq("id", inst.id);
+          } else if (!isSelected && hasCourse) {
+            const updatedCourses = currentCourses.filter(
+              (id) => id !== courseId,
+            );
+            await supabase
+              .from("instructors")
+              .update({ assign_courses_ids: updatedCourses })
+              .eq("id", inst.id);
+          }
+        }
+      }
+
+      setIsModalOpen(false);
+      await fetchData();
+    } catch (err) {
+      console.error("Error saving course:", err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSaveProgramme = async (e: React.FormEvent) => {
@@ -463,7 +561,7 @@ export default function AcademicProgramsCourses() {
                     <div className="px-6 pb-6 pt-0">
                       <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center justify-end">
                         <span className="font-bold text-amber-500 dark:text-amber-500">
-                          LKR{" "} {crs.course_amount || "N/A"}
+                          LKR {crs.course_amount || "N/A"}
                         </span>
                       </div>
                     </div>
@@ -555,14 +653,7 @@ export default function AcademicProgramsCourses() {
                     onClick={() => {
                       setIsEditing(true);
                       if (selectedCourse) {
-                        setCourseFormData({
-                          course_code: selectedCourse.course_code,
-                          course_name: selectedCourse.course_name,
-                          course_amount: selectedCourse.course_amount || "",
-                          cover_image: selectedCourse.cover_image || "",
-                          programme_id: selectedCourse.programme_id || "",
-                          course_desc: selectedCourse.course_desc || "",
-                        });
+                        handleEditCourseSetup(selectedCourse);
                       } else if (selectedProgramme) {
                         setProgrammeFormData({
                           programme_code: selectedProgramme.programme_code,
@@ -633,6 +724,44 @@ export default function AcademicProgramsCourses() {
                         </span>
                       </div>
 
+                      {/* Display Assigned Instructors */}
+                      <div className="py-2 border-b border-zinc-100 dark:border-zinc-800/60">
+                        <span className="text-zinc-500 text-xs flex items-center gap-2 mb-1.5">
+                          <Users className="w-4 h-4 text-amber-500" />{" "}
+                          Instructors
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {instructors.filter((inst) =>
+                            Array.isArray(inst.assign_courses_ids)
+                              ? inst.assign_courses_ids.includes(
+                                  selectedCourse.id,
+                                )
+                              : false,
+                          ).length === 0 ? (
+                            <span className="text-xs text-zinc-400">
+                              No instructors assigned
+                            </span>
+                          ) : (
+                            instructors
+                              .filter((inst) =>
+                                Array.isArray(inst.assign_courses_ids)
+                                  ? inst.assign_courses_ids.includes(
+                                      selectedCourse.id,
+                                    )
+                                  : false,
+                              )
+                              .map((inst) => (
+                                <span
+                                  key={inst.id}
+                                  className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-[11px] font-medium text-zinc-700 dark:text-zinc-300"
+                                >
+                                  {inst.full_name || inst.email}
+                                </span>
+                              ))
+                          )}
+                        </div>
+                      </div>
+
                       {selectedCourse.programmes?.awrding_body && (
                         <div className="flex items-center justify-between py-2 border-b border-zinc-100 dark:border-zinc-800/60">
                           <span className="text-zinc-500 text-xs flex items-center gap-2">
@@ -651,7 +780,7 @@ export default function AcademicProgramsCourses() {
                           Amount
                         </span>
                         <span className="font-medium text-xs">
-                          LKR{" "}{selectedCourse.course_amount || "N/A"}
+                          LKR {selectedCourse.course_amount || "N/A"}
                         </span>
                       </div>
                     </div>
@@ -826,6 +955,48 @@ export default function AcademicProgramsCourses() {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                {/* Multi-Select Instructors UI */}
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
+                    Assign Instructors
+                  </label>
+                  <div className="max-h-40 overflow-y-auto space-y-1.5 p-2 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+                    {instructors.length === 0 ? (
+                      <p className="text-xs text-zinc-400 p-2">
+                        No instructors found.
+                      </p>
+                    ) : (
+                      instructors.map((inst) => {
+                        const isChecked =
+                          courseFormData.selected_instructor_ids.includes(
+                            inst.id,
+                          );
+                        return (
+                          <label
+                            key={inst.id}
+                            className={`flex items-center justify-between p-2 rounded-lg cursor-pointer text-xs font-medium transition-colors ${
+                              isChecked
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                                : "hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => handleInstructorToggle(inst.id)}
+                                className="rounded accent-amber-500"
+                              />
+                              <span>{inst.full_name || inst.email}</span>
+                            </div>
+                            {isChecked && <UserCheck className="w-3.5 h-3.5" />}
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
 
                 {/* Cover Image Upload Control */}
