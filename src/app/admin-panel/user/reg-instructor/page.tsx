@@ -177,7 +177,7 @@ export default function InstructorManagement() {
       email: formData.email,
       phone: formData.phone,
       programs_id: formData.programs_id,
-      assign_courses_ids: formData.assign_courses_ids, 
+      assign_courses_ids: formData.assign_courses_ids,
       bio: formData.bio,
       status: formData.status,
     };
@@ -331,6 +331,20 @@ export default function InstructorManagement() {
         {loading ? (
           <div className="flex justify-center items-center py-20 text-amber-500">
             <Loader2 className="w-8 h-8 animate-spin" />
+          </div>
+        ) : filteredInstructors.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl bg-white dark:bg-zinc-900/40 border border-dashed border-zinc-200 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mb-3">
+              <GraduationCap className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+              No instructors registered
+            </h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 max-w-sm">
+              {searchQuery
+                ? "No instructors found matching your search query."
+                : "Get started by registering a new academic member."}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
