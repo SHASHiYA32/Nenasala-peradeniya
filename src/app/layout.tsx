@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/provider/providers";
-import { Toaster } from "@/components/ui/sonner";
 import LayoutShell from "./LayoutShell";
+import { Toaster } from "@/components/ui/toast";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -30,7 +30,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-(family-name:--font-poppins)">
         <Providers>
           <LayoutShell>{children}</LayoutShell>
-          <Toaster position="top-right" richColors />
+          <Toaster/>
         </Providers>
       </body>
     </html>

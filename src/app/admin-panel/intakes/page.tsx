@@ -76,39 +76,51 @@ export default function IntakeManagement() {
     notes: "",
   });
 
-  // Fetch Data from Supabase
   const fetchData = async () => {
-  setLoading(true);
-  try {
-    const { data: coursesData, error: coursesError } = await supabase
-      .from("courses")
-      .select("id, course_name, course_code, programme_id, programmes(id, duration)");
+    setLoading(true);
+    try {
+      const { data: coursesData, error: coursesError } = await supabase
+        .from("courses")
+        .select(
+          "id, course_name, course_code, programme_id, programmes(id, duration)",
+        );
 
-    if (coursesError) throw coursesError;
+      if (coursesError) throw coursesError;
 
-    // Safely unwrap array response into a single object
-    const formattedCourses = (coursesData || []).map((course: any) => ({
-      ...course,
-      programmes: Array.isArray(course.programmes) 
-        ? course.programmes[0] || null 
-        : course.programmes,
-    }));
+      const formattedCourses = (coursesData || []).map((course: any) => ({
+        ...course,
+        programmes: Array.isArray(course.programmes)
+          ? course.programmes[0] || null
+          : course.programmes,
+      }));
 
-    setCourses(formattedCourses);
+      setCourses(formattedCourses);
 
-    const { data: intakesData, error: intakesError } = await supabase
-      .from("intakes")
-      .select("*, courses(id, course_name, course_code, programmes(id, duration))")
-      .order("created_at", { ascending: false });
+      const { data: intakesData, error: intakesError } = await supabase
+        .from("intakes")
+        .select(
+          `
+        *,
+        courses(id, course_name, course_code, programmes(id, duration)),
+        enrollment(count)
+      `,
+        )
+        .order("created_at", { ascending: false });
 
-    if (intakesError) throw intakesError;
-    setIntakes(intakesData || []);
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+      if (intakesError) throw intakesError;
+
+      const formattedIntakes = (intakesData || []).map((intake: any) => ({
+        ...intake,
+        enrolled_count: intake.enrollment?.[0]?.count || 0,
+      }));
+
+      setIntakes(formattedIntakes);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchData();

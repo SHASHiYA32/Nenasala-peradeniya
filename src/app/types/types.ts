@@ -39,4 +39,58 @@ export interface UserProfile {
   emp_id: string | null;
 }
 
+export interface AddStudentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+}
+
 export type NewClassInput = Omit<ClassItem, 'id'>;
+
+export interface StudentDetails {
+  student: any;
+  enrollments: Array<{
+    enrollment_id: string;
+    status: boolean;
+    paid_amount: string;
+    slips: any;
+    intake: any;
+    course: any;
+    programme: any;
+  }>;
+}
+
+export interface Programme {
+  id: string;
+  programme_title?: string;
+  programme_code?: string;
+  awrding_body?: string;
+  duration?: number;
+}
+
+export interface Course {
+  id: string;
+  course_code?: string;
+  course_name?: string;
+  course_amount?: string;
+  cover_image?: string;
+  course_desc?: string;
+  programme_id?: string;
+  programmes?: Programme | null;
+}
+
+export interface Intake {
+  id: string;
+  name: string;
+  code: string;
+  status: string | null;
+  start_date: string;
+}
+
+export interface SuccessDetails {
+  email: string;
+  temp_psw: string;
+  stu_register_id: string;
+  program_title: string;
+  course_name: string;
+}
